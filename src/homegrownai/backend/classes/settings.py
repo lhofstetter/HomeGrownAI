@@ -6,7 +6,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
     )
-    database_url: str
-    database_password: SecretStr 
-    model_url: str
-    model_api_key: SecretStr 
+
+    db_url: str = Field()
+    db_passwd: SecretStr = Field()
+    model_url: str = Field()
+    model_api_key: SecretStr = Field()
+
+settings = Settings()

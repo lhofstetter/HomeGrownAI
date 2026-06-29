@@ -11,3 +11,10 @@ dependencies = [
     "sqlalchemy>=2.0.51",
 ]
 
+[project.scripts]
+homegrownai = "homegrownai.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.25,<0.12"]
+build-backend = "uv_build"
+
