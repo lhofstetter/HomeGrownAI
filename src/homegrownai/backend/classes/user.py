@@ -1,16 +1,20 @@
 from datetime import date
-from typing import Annotated, List, ByteString
+from typing import ByteString, Union
 
-from role import Role
+from .role import Role
+from .db import Base
 
-from pydantic import BaseModel, Field
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-class User(BaseModel):
-    username: Annotated[str, Field(strict=True)]
-    email: Annotated[str, Field(strict=True)]
-    registration_date: Annotated[date, Field()]
-    roles: List[Role]
-
-    def add_role(self, admin_token: ByteString) -> bool:
+class User(Base):
+    __tablename__ = "users"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str]
+    email: Mapped[str]
+    registration_date: Mapped[date]
+    roles: Mapped[list[Role]] = relationship(back_populates="user")
+    
+    def add_role(self, admin_token: ByteString, user_id: Union[int, None] = None) -> bool:
         return True
     
