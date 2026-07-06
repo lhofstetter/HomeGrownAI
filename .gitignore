@@ -1,3 +1,5 @@
 .env*
 *pycache*
 docs/
+expo-env.d.ts
+.expo/
