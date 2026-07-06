@@ -5,9 +5,9 @@ from fastapi import FastAPI, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
 
-from homegrownai.backend.classes.settings import settings
+from .schemas.settings import settings
 
-from .classes.db import DB
+from .database.db import DB
 
 app = FastAPI(
     title="HomeGrownAI API Backend",

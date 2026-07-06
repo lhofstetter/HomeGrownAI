@@ -8,9 +8,8 @@ from sqlalchemy import select, Engine, insert
 from sqlalchemy.dialects.postgresql import UUID
 from pydantic import SecretStr
 
-from .role import Role
 from .db import Base, DB, DBSession
-from .exceptions import UserRegistrationError, EmailAlreadyRegisteredError
+from ..exceptions import UserRegistrationError, EmailAlreadyRegisteredError
 
 
 class User(Base):

@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from loguru import logger
 
 
-from .exceptions import DatabaseError
+from homegrownai.exceptions import DatabaseError
 
 class DB:
     def __init__(self, engine_url: str, user: str, password: SecretStr):
