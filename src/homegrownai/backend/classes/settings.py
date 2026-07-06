@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     )
 
     db_url: str = Field()
+    db_user: str = Field()
     db_passwd: SecretStr = Field()
     model_url: str = Field()
     model_api_key: SecretStr = Field()
