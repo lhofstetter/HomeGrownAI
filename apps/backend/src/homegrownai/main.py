@@ -9,14 +9,17 @@ from .schemas.settings import settings
 
 from .database.db import DB
 
-app = FastAPI(
-    title="HomeGrownAI API Backend",
-    version= version("homegrownai")
+app = FastAPI(title="HomeGrownAI API Backend", version=version("homegrownai"))
+
+db = DB(
+    db_driver=settings.db_driver,
+    db_host=settings.db_host,
+    db_name=settings.db_name,
+    db_port=settings.db_port,
+    db_password=settings.db_passwd,
+    db_user=settings.db_user,
 )
 
-db = DB(settings.db_url, settings.db_user, settings.db_passwd)
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.get("/")
 async def root():
@@ -24,5 +27,3 @@ async def root():
         "status": "ok",
         "version": app.version,
     }
-
-
