@@ -6,12 +6,12 @@ from jwt import InvalidTokenError, encode, decode
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer
 
-from ..main import settings, db
-from ..database.db import DBSession
-from ..database.user import User
+from homegrownai.database.user import User
+from homegrownai.database.dependencies import get_db_session
+from homegrownai.schemas.settings import settings
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/token",
+    tokenUrl="/users/login",
 )
 
 credentials_exception = HTTPException(
@@ -65,7 +65,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
 
     user_id = payload["sub"]
 
-    with DBSession(db) as session:
+    with get_db_session() as session:
         user: User = session.get_one(User, user_id)
 
         if not user.is_active:

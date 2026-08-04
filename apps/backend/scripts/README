@@ -1,0 +1,23 @@
+This project follows Alembic's "Building an Up to Date Database from Scratch"
+cookbook recipe.
+
+At application startup:
+
+* A completely blank schema is built from the current SQLAlchemy metadata and
+  stamped with Alembic's current head revision.
+* A database that already contains Alembic's version table is upgraded to head
+  using incremental migration files.
+* A non-empty database with no Alembic version table is rejected rather than
+  being incorrectly stamped as current.
+
+Create a migration after changing an ORM model:
+
+    uv run alembic revision --autogenerate -m "describe the change"
+
+Review the generated migration, then apply it:
+
+    uv run alembic upgrade head
+
+Whenever a new ORM model module is added, import it from
+`homegrownai.database.models` so both `create_all()` and Alembic autogenerate
+can see its table metadata.
