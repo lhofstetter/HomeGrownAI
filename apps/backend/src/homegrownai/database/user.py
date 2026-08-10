@@ -27,6 +27,11 @@ class User(Base):
     registration_date: Mapped[date]
     is_active: Mapped[bool]
     deletion_date: Mapped[date]
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 def add_user(database: DB, new_user: User):

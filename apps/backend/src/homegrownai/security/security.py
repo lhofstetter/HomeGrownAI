@@ -72,3 +72,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             raise inactive_exception
         else:
             return user
+
+
+CurrentUser = Annotated[User, Depends(get_current_user)]

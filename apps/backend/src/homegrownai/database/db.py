@@ -8,6 +8,7 @@ from loguru import logger
 
 from homegrownai.exceptions import DatabaseError
 
+
 class DB:
     def __init__(
         self,

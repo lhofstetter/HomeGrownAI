@@ -5,7 +5,7 @@ from pwdlib import PasswordHash
 from sqlalchemy import or_
 from datetime import datetime
 
-from homegrownai.security.security import create_access_token
+from homegrownai.security.security import create_access_token, CurrentUser
 from homegrownai.database.db import DBSession
 from homegrownai.database.dependencies import get_db_session
 from homegrownai.database.user import User
@@ -13,10 +13,11 @@ from homegrownai.schemas.user import UserRegistration
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
+
 @users_router.post("/login")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
-    session: Annotated[DBSession, Depends(get_db_session)]
+    session: Annotated[DBSession, Depends(get_db_session)],
 ) -> dict[str, str]:
     hasher = PasswordHash.recommended()
 
@@ -24,7 +25,10 @@ async def login(
         user: User | None = (
             db.query(User)
             .filter(
-                or_(User.email == form_data.username, User.username == form_data.username)
+                or_(
+                    User.email == form_data.username,
+                    User.username == form_data.username,
+                )
             )
             .first()
         )
@@ -54,28 +58,47 @@ async def login(
 @users_router.post("/signup")
 async def register_account(
     signup_form: UserRegistration,
-    session: Annotated[DBSession, Depends(get_db_session)]
+    session: Annotated[DBSession, Depends(get_db_session)],
 ):
     hasher = PasswordHash.recommended()
-    new_user = User(username=signup_form.username, hashed_password=hasher.hash(signup_form.password), email=signup_form.email, registration_date=datetime.now(), is_active=True)
+    new_user = User(
+        username=signup_form.username,
+        hashed_password=hasher.hash(signup_form.password),
+        email=signup_form.email,
+        registration_date=datetime.now(),
+        is_active=True,
+    )
 
     with session as db:
-        existing_user: User | None = db.query(User).filter(
+        existing_user: User | None = (
+            db.query(User)
+            .filter(
                 or_(User.email == new_user.email, User.username == new_user.username)
-                ).first()
-        
+            )
+            .first()
+        )
+
         if existing_user != None:
             raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail="Username or email is already registered with an account!",
-                        headers={"WWW-Authenticate": "Bearer"},
-                    )
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username or email is already registered with an account!",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         db.commit()
         access_token = create_access_token(user_id=str(new_user.id))
 
         return {
-                "result": "Account created!",
-                "access_token": access_token,
-                "token_type": "bearer",
-            }
-                
+            "result": "Account created!",
+            "access_token": access_token,
+            "token_type": "bearer",
+        }
+
+
+@users_router.get("/memories")
+async def get_memories(user: CurrentUser) -> None:
+    pass
+
+
+@users_router.get("/conversations")
+async def get_conversations(user: CurrentUser) -> None:
+    pass

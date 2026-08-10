@@ -10,6 +10,7 @@ db = DB(
     db_user=settings.db_user,
 )
 
+
 def get_db_session():
     with DBSession(db) as session:
         yield session
