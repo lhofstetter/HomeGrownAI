@@ -32,6 +32,13 @@ class UserNotFoundError(AIAppError):
             "Error when attempting to locate a user when no such user exists."
         )
 
+class ModelNotFoundError(AIAppError):
+    def __init__(self):
+        super().__init__(
+            "Model is not found on Hugging Face!"
+        )
+
+
 
 class EmailAlreadyRegisteredError(UserRegistrationError):
     pass

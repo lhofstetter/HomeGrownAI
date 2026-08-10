@@ -2,12 +2,12 @@
 name = "homegrownai"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.14"
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "alembic>=1.18.5",
-    "asyncio>=4.0.0",
     "fastapi[standard]>=0.137.2",
-    "hypercorn>=0.18.0",
+    "uvicorn>=0.36",
+    "httptools>=0.8",
     "loguru>=0.7.3",
     "psycopg[binary]>=3.3.4",
     "pwdlib[argon2]>=0.3.0",
@@ -15,7 +15,13 @@ dependencies = [
     "pyjwt>=2.13.0",
     "sqlalchemy>=2.0.51",
     "uvloop>=0.22.1",
+    "bitsandbytes>=0.50.0",
+    "huggingface-hub>=1.27.0",
 ]
+
+[project.optional-dependencies]
+metal = []
+rocm = []
 
 [project.scripts]
 homegrownai = "homegrownai.cli:main"
@@ -24,7 +30,18 @@ homegrownai = "homegrownai.cli:main"
 requires = ["uv_build>=0.11.25,<0.12"]
 build-backend = "uv_build"
 
+[tool.uv]
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+]
 
+conflicts = [
+    [
+        { extra = "metal" },
+        { extra = "rocm" },
+    ],
+]
 
 [tool.alembic]
 

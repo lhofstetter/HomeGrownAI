@@ -3,3 +3,4 @@
 docs/
 expo-env.d.ts
 .expo/
+.ruff_cache*
