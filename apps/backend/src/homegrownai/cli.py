@@ -1,12 +1,12 @@
-from uvicorn import Config, Server
 import uvloop
+from uvicorn import Config, Server
 
 from .main import app
 
 """
-Set Hypercorn configuration:
-    - bind to localhost + port number -> reverse proxy using NGINX
-    - set number of backlog connections 
+Set uvicorn configuration:
+    - bind to localhost + port number (assumes you will reverse proxy using NGINX)
+    - set number of backlog connections
     - set maximum enqueued application events
 """
 
@@ -15,7 +15,7 @@ uvloop.install()
 config = Config(
     app=app,
     host="127.0.0.1",
-    port=8000,
+    port=27403,
     loop="uvloop",
     http="httptools",
     workers=1,

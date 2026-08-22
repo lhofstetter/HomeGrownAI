@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from datetime import datetime, timezone
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from sqlalchemy import or_
-from datetime import datetime
 
-from homegrownai.security.security import create_access_token, CurrentUser
 from homegrownai.database.db import DBSession
 from homegrownai.database.dependencies import get_db_session
 from homegrownai.database.user import User
 from homegrownai.schemas.user import UserRegistration
+from homegrownai.security.security import CurrentUser, create_access_token
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -65,7 +66,7 @@ async def register_account(
         username=signup_form.username,
         hashed_password=hasher.hash(signup_form.password),
         email=signup_form.email,
-        registration_date=datetime.now(),
+        registration_date=datetime.now(timezone.utc),
         is_active=True,
     )
 

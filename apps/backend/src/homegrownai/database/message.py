@@ -1,7 +1,7 @@
+from datetime import datetime
+from enum import Enum as PyEnum
 from typing import Any
 from uuid import UUID, uuid4
-from enum import Enum as PyEnum
-from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
@@ -33,7 +33,7 @@ class Message(Base):
     __table_args__ = (
         UniqueConstraint(
             "conversation_id",
-            "seqeuence_number",
+            "sequence_number",
             name="uq_message_conversation_sequence",
         ),
     )
@@ -79,6 +79,6 @@ class Message(Base):
         nullable=False,
     )
 
-    conversation: Mapped["Conversation"] = relationship(
+    conversation: Mapped["Conversation"] = relationship(  # noqa: F821
         back_populates="messages",
     )

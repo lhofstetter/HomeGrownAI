@@ -1,7 +1,6 @@
 from logging.config import fileConfig
 
 from alembic import context
-
 from homegrownai.database.dependencies import db
 from homegrownai.database.models import Base
 

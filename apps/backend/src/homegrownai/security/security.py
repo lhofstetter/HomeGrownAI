@@ -1,13 +1,13 @@
-from typing import Annotated, Any
 from datetime import datetime, timedelta, timezone
+from typing import Annotated, Any
 from uuid import uuid4
 
-from jwt import InvalidTokenError, encode, decode
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jwt import InvalidTokenError, decode, encode
 
-from homegrownai.database.user import User
 from homegrownai.database.dependencies import get_db_session
+from homegrownai.database.user import User
 from homegrownai.schemas.settings import settings
 
 oauth2_scheme = OAuth2PasswordBearer(

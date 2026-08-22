@@ -17,6 +17,8 @@ dependencies = [
     "uvloop>=0.22.1",
     "bitsandbytes>=0.50.0",
     "huggingface-hub>=1.27.0",
+    "markitdown[all]>=0.1.7",
+	"systemdunitparser>=0.4; sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +32,12 @@ homegrownai = "homegrownai.cli:main"
 requires = ["uv_build>=0.11.25,<0.12"]
 build-backend = "uv_build"
 
+# Python 3.12 is used on macOS because vLLM Metal only officially supports Python 3.12, view any updates here:
+# https://github.com/vllm-project/vllm-metal/blob/main/README.md
+
+# We use Python 3.14 on Linux because 3.14 is the latest official release that has been around for a while (giving package
+# maintainers time to catch up and optimize for it). Also, there *shouldn't* be any specific reason to lock the platform to x86_64
+# on Linux, BUT I've never tested it, so you can remove that requirement at your own peril.
 [tool.uv]
 environments = [
     "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
@@ -46,15 +54,9 @@ conflicts = [
 [tool.alembic]
 
 # path to migration scripts.
-# this is typically a path given in POSIX (e.g. forward slashes)
-# format, relative to the token %(here)s which refers to the location of this
-# ini file
 script_location = "%(here)s/scripts"
 
 # template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
-# Uncomment the line below if you want the files to be prepended with date and time
-# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
-# for all available tokens
 # file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
 # Or organize into date-based subdirectories (requires recursive_version_locations = true)
 # file_template = "%%(year)d/%%(month).2d/%%(day).2d_%%(hour).2d%%(minute).2d_%%(second).2d_%%(rev)s_%%(slug)s"
@@ -69,19 +71,14 @@ prepend_sys_path = [
 # If specified, requires the tzdata library which can be installed by adding
 # `alembic[tz]` to the pip requirements.
 # string value is passed to ZoneInfo()
-# leave blank for localtime
 # timezone =
 
-# max length of characters to apply to the "slug" field
 # truncate_slug_length = 40
 
-# set to 'true' to run the environment during
-# the 'revision' command, regardless of autogenerate
+# set to 'true' to run the environment during the 'revision' command, regardless of autogenerate
 # revision_environment = false
 
-# set to 'true' to allow .pyc and .pyo files without
-# a source .py file to be detected as revisions in the
-# versions/ directory
+# set to 'true' to allow .pyc and .pyo files without a source .py file to be detected as revisions in the versions/ directory
 # sourceless = false
 
 # version location specification; This defaults
@@ -126,4 +123,3 @@ prepend_sys_path = [
 # type = "exec"
 # executable = "ruff"
 # options = "check --fix REVISION_SCRIPT_FILENAME"
-

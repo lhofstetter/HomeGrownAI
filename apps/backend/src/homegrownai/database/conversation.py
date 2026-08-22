@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
-from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Uuid, DateTime, func
+from sqlalchemy import DateTime, ForeignKey, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from homegrownai.database.db import Base
+from homegrownai.database.message import Message
 
 
 class Conversation(Base):
@@ -35,7 +36,7 @@ class Conversation(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        server_default=func.now(timezone.utc),
         nullable=False,
     )
 
@@ -46,6 +47,6 @@ class Conversation(Base):
         order_by=lambda: Message.sequence_number,
     )
 
-    user: Mapped["User"] = relationship(
+    user: Mapped["User"] = relationship(  # noqa: F821
         back_populates="conversations",
     )

@@ -1,5 +1,5 @@
-from .db import DB, DBSession
 from ..schemas.settings import settings
+from .db import DB, DBSession
 
 db = DB(
     db_driver=settings.db_driver,

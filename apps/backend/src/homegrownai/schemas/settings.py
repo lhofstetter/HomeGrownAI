@@ -1,5 +1,4 @@
-from typing import Annotated
-from pydantic import AnyUrl, Field, PositiveInt, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

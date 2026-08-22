@@ -1,12 +1,9 @@
-import traceback
 from types import TracebackType
-from typing import Type
-from pydantic import SecretStr
-from sqlalchemy.engine import create_engine, URL
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
-from loguru import logger
 
-from homegrownai.exceptions import DatabaseError
+from loguru import logger
+from pydantic import SecretStr
+from sqlalchemy.engine import URL, create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
 class DB:
@@ -44,7 +41,7 @@ class DBSession:
 
     def __exit__(
         self,
-        exc_type: Type[BaseException] | None,
+        exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ):
@@ -69,7 +66,7 @@ class DBSession:
 
 """
 @class Base:
-    Forms the base for SQLAlchemy's ORM, so that models used in the database are mapped to actual Python objects.  
+    Forms the base for SQLAlchemy's ORM, so that models used in the database are mapped to actual Python objects.
 """
 
 

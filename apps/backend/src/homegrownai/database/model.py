@@ -1,10 +1,9 @@
 from uuid import uuid4
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
-from sqlalchemy import select, Engine, insert, update
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
-from .db import Base, DB, DBSession
+from .db import Base
 
 
 class Model(Base):

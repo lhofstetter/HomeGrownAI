@@ -8,7 +8,6 @@ Create Date: 2026-07-30
 
 from collections.abc import Sequence
 
-
 revision: str = "0001_schema_baseline"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None

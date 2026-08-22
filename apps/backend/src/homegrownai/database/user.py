@@ -1,18 +1,15 @@
-from datetime import date
-from typing import ByteString
-from uuid import UUID as UUID_Rand
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
-from sqlalchemy import select, Engine, insert, update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .db import Base, DB, DBSession
 from ..exceptions import (
-    UserRegistrationError,
     EmailAlreadyRegisteredError,
     UserDeletionError,
 )
+from .db import DB, Base, DBSession
 
 
 class User(Base):
@@ -27,7 +24,7 @@ class User(Base):
     registration_date: Mapped[date]
     is_active: Mapped[bool]
     deletion_date: Mapped[date]
-    conversations: Mapped[list["Conversation"]] = relationship(
+    conversations: Mapped[list["Conversation"]] = relationship(  # noqa: F821
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -58,5 +55,5 @@ def delete_user(database: DB, existing_user: User):
             session.execute(
                 update(User)
                 .where(User.email == existing_user.email)
-                .values(is_active=False, deletion_date=date.today())
+                .values(is_active=False, deletion_date=datetime.now(tz=timezone.utc))
             )
