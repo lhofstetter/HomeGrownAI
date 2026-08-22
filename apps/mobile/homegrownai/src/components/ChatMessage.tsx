@@ -16,5 +16,3 @@ export default function ChatMessage({ message, side, expandable }: ChatMessagePr
 		</ThemedView>
 	);
 }
-
-

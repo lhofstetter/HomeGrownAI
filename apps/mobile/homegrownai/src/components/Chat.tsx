@@ -30,7 +30,7 @@ export default function Chat({conversationTitle, conversationID, modelID, attach
 			id: currentMessage.id
 		});
 	}
-	
+
 	function onSubmit(event: GestureResponderEvent) {
 		addToChat([...chat, currentMessage]);
 		addToCurrentMessage({
