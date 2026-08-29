@@ -20,11 +20,12 @@ HomeGrownAI currently utilizes the languages and frameworks below for the projec
 
 #### Backend
 **Language**: Python
+<br/>
 **Frameworks/Libraries**:
 * FastAPI
 * Pydantic
 * SQLAlchemy
-* Hypercorn
+* Uvicorn
 * psycopg
 * Alembic
 * Loguru
@@ -32,26 +33,30 @@ HomeGrownAI currently utilizes the languages and frameworks below for the projec
 * pyjwt
 * uvloop
 * asyncio
+* vLLM
+* bitsandbytes
+<br/>
 **Tools**:
 * uv
 * ty
 
-For the backend, I use FastAPI for ease of use and Hypercorn for it's HTTP/2 and 3 capabilities, coupled with uvloop/asyncio. While using Hypercorn over Uvicorn wouldn't matter if the application was parked behind a reverse proxy, I like the newer protocol support being native. Pydantic is used for data validation and signup/signin with Bearer Tokens, with pyjwt being used for the Bearer Tokens themselves. Database interfacing uses SQLAlchemy with the psycopg adapter, since I chose to use PostgreSQL. Alembic is used for database migrations, and pwdlib is used for password salt + hashing.
+For the backend, I use FastAPI for ease of use and Uvicorn for it's superior HTTP 1/1.1 throughput (as the application is designed to be put behind a reverse proxy), coupled with uvloop/asyncio. Pydantic is used for data validation and signup/signin with Bearer Tokens, with pyjwt being used for the Bearer Tokens themselves. Database interfacing uses SQLAlchemy with the psycopg adapter, since I chose to use PostgreSQL. Alembic is used for database migrations, and pwdlib is used for password salt + hashing.
 
-For AI/LLM, I'm thinking of using vLLM due to it's performance in terms of raw throughput. However, I may use SGLang or other frameworks depending on how difficult it is to wire-up agentic capabilities with vLLM as the project grows.
-
+For AI/LLM, I currently utilize vLLM due to it's speed and ease of integration with common quantization technologies, such as bitsandbytes which is used for 4-bit quantization. Obscura is used for a "stealth" browser tool that can run persistently as it's own process, while Playwright + CDP is used to control it. In the future, I'll document more of what works and what doesn't for the AI/LLM portions, as I know that (for me personally) it is difficult to see what does and doesn't work amongst today's documentation.
 
 #### Mobile
 **Language**: Primarily TypeScript, with a smidge of JavaScript
 **Frameworks/Libraries**:
 * React/React Native
 * Expo
+* React Navigation
 * react-native-uuid
 * Nativewind/TailwindCSS
+* Axios
 **Tools**:
 * [Bun](https://bun.com)
 
-So far, the set of used libraries/components is pretty basic, as I'm mainly focused on getting the basic MVP up and running. I'll soon add the network dependencies required to communicate with the backend and more advanced functionality, but I want to get the actual LLM portion done on the backend so that I can test the chat functionality.
+I utilize React/React Native due to the familiarity and experience I have with it when helping to develop [cinder](https://github.com/lhofstetter/cinder). I also utilize Expo for it's ease of use and vast set of libraries, as well as the simplicity it offers when building and deploying via EAS. React Navigation is used over Expo Router because I find the Expo Router development experience confusing and better suited to web development. React-native-uuid is used for generating UUIDs easily, while Nativewind is used for easy of styling. Axios is used for network requests to the backend.
 
 #### Web
 **Language**: Primarily TypeScript, with a smidge of JavaScript
