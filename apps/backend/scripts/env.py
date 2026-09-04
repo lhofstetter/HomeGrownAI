@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from homegrownai.database.dependencies import db
 from homegrownai.database.models import Base
+from pgvector.sqlalchemy import VECTOR
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,6 +20,14 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+def render_item(type_, obj, autogen_context):
+    if type_ == "type" and isinstance(obj, VECTOR):
+        autogen_context.imports.add("from pgvector.sqlalchemy import VECTOR")
+        return repr(obj)
+
+    return False
 
 
 def run_migrations_offline() -> None:
@@ -38,6 +47,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_item=render_item,
     )
 
     with context.begin_transaction():
@@ -57,6 +67,7 @@ def run_migrations_online() -> None:
             connection=supplied_connection,
             target_metadata=target_metadata,
             compare_type=True,
+            render_item=render_item,
         )
 
         with context.begin_transaction():
@@ -68,6 +79,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            render_item=render_item,
         )
 
         with context.begin_transaction():

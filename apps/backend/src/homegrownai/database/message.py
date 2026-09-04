@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -18,6 +20,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from homegrownai.database.db import Base
+
+if TYPE_CHECKING:
+    from homegrownai.database.conversation import Conversation
 
 
 class MessageRole(str, PyEnum):
@@ -79,6 +84,6 @@ class Message(Base):
         nullable=False,
     )
 
-    conversation: Mapped["Conversation"] = relationship(  # noqa: F821
+    conversation: Mapped[Conversation] = relationship(
         back_populates="messages",
     )

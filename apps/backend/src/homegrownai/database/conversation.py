@@ -1,11 +1,17 @@
-from datetime import datetime, timezone
+from __future__ import annotations
+
+from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, ForeignKey, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from homegrownai.database.db import Base
-from homegrownai.database.message import Message
+
+if TYPE_CHECKING:
+    from homegrownai.database.message import Message
+    from homegrownai.database.user import User
 
 
 class Conversation(Base):
@@ -36,17 +42,17 @@ class Conversation(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(timezone.utc),
+        server_default=func.now(),
         nullable=False,
     )
 
-    messages: Mapped[list["Message"]] = relationship(
+    messages: Mapped[list[Message]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by=lambda: Message.sequence_number,
+        order_by="Message.sequence_number",
     )
 
-    user: Mapped["User"] = relationship(  # noqa: F821
+    user: Mapped[User] = relationship(
         back_populates="conversations",
     )

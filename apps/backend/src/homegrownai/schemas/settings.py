@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
+    degoog_docker_passwd: SecretStr
+    degoog_docker_db_passwd: SecretStr
 
     model_config = SettingsConfigDict(
         env_file=".env",

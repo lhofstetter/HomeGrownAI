@@ -1,15 +1,23 @@
+from __future__ import annotations
+
 from datetime import date, datetime, timezone
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from homegrownai.database.db import DB, Base, DBSession
+
 from ..exceptions import (
     EmailAlreadyRegisteredError,
     UserDeletionError,
 )
-from .db import DB, Base, DBSession
+
+if TYPE_CHECKING:
+    from homegrownai.database.conversation import Conversation
+    from homegrownai.database.document import Document
 
 
 class User(Base):
@@ -24,11 +32,19 @@ class User(Base):
     registration_date: Mapped[date]
     is_active: Mapped[bool]
     deletion_date: Mapped[date]
-    conversations: Mapped[list["Conversation"]] = relationship(  # noqa: F821
+    conversations: Mapped[list[Conversation]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    documents: Mapped[list[Document]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    custom_model_name: Mapped[str]
+    custom_model_instructions: Mapped[str]
+    human_name: Mapped[str]
 
 
 def add_user(database: DB, new_user: User):

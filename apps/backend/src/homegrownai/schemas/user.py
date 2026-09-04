@@ -11,4 +11,4 @@ class Conversation(BaseModel):
     conversationTitle: str
     conversationID: str
     modelID: str | None
-    attachments: list[str] | None
+    attachments: list[dict[str, str]] | None

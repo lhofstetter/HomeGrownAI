@@ -4,3 +4,4 @@ docs/
 expo-env.d.ts
 .expo/
 .ruff_cache*
+compose.yaml

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from sqlalchemy import or_
@@ -58,7 +58,7 @@ async def login(
 
 @users_router.post("/signup")
 async def register_account(
-    signup_form: UserRegistration,
+    signup_form: Annotated[UserRegistration, Form()],
     session: Annotated[DBSession, Depends(get_db_session)],
 ):
     hasher = PasswordHash.recommended()

@@ -1,7 +1,7 @@
 [project]
 name = "homegrownai"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.1"
+description = "A self-hosted, 70-90% human-written AI backend for HomeGrownAI."
 requires-python = ">=3.12,<3.15"
 dependencies = [
     "alembic>=1.18.5",
@@ -18,7 +18,16 @@ dependencies = [
     "bitsandbytes>=0.50.0",
     "huggingface-hub>=1.27.0",
     "markitdown[all]>=0.1.7",
-	"systemdunitparser>=0.4; sys_platform == 'linux'",
+    "systemdunitparser>=0.4; sys_platform == 'linux'",
+    "launchd>=1.0.0",
+    "niquests>=3.21.0",
+    "qh3>=1.9.4",
+    "playwright>=1.62.0",
+    "pgvector>=0.5.0",
+    "beautifulsoup4>=4.15.0",
+    "lxml>=6.1.1",
+    "orjson>=3.12.0",
+    "docker>=7.2.0",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +46,8 @@ build-backend = "uv_build"
 
 # We use Python 3.14 on Linux because 3.14 is the latest official release that has been around for a while (giving package
 # maintainers time to catch up and optimize for it). Also, there *shouldn't* be any specific reason to lock the platform to x86_64
-# on Linux, BUT I've never tested it, so you can remove that requirement at your own peril.
+# on Linux, BUT I've never tested this on aarch64 or other architectures, so you can remove that requirement at your own risk.
+
 [tool.uv]
 environments = [
     "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
