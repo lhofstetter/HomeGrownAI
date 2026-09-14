@@ -11,6 +11,15 @@ repos:
     - id: ruff-check
       args: [ --fix ]
     - id: ruff-format
+-   repo: https://github.com/betterleaks/betterleaks
+    rev: v1.8.1
+    hooks:
+    - id: betterleaks
+      name: Detect hardcoded secrets
+      description: Detect hardcoded secrets using Betterleaks
+      entry: betterleaks git --pre-commit --redact --staged --verbose
+      language: golang
+      pass_filenames: false
 -   repo: local
     hooks:
     - id: prettier

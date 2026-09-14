@@ -35,17 +35,24 @@ HomeGrownAI currently utilizes the languages and frameworks below for the projec
 * asyncio
 * vLLM
 * bitsandbytes
+* huggingface
+* niquests
+* markitdown
+* Wenmode
+* docker
 <br/>
 **Tools**:
 * uv
 * ty
-
+* Docker
+<br/>
 For the backend, I use FastAPI for ease of use and Uvicorn for it's superior HTTP 1/1.1 throughput (as the application is designed to be put behind a reverse proxy), coupled with uvloop/asyncio. Pydantic is used for data validation and signup/signin with Bearer Tokens, with pyjwt being used for the Bearer Tokens themselves. Database interfacing uses SQLAlchemy with the psycopg adapter, since I chose to use PostgreSQL. Alembic is used for database migrations, and pwdlib is used for password salt + hashing.
 
-For AI/LLM, I currently utilize vLLM due to it's speed and ease of integration with common quantization technologies, such as bitsandbytes which is used for 4-bit quantization. Obscura is used for a "stealth" browser tool that can run persistently as it's own process, while Playwright + CDP is used to control it. In the future, I'll document more of what works and what doesn't for the AI/LLM portions, as I know that (for me personally) it is difficult to see what does and doesn't work amongst today's documentation.
+For AI/LLM, I currently utilize vLLM due to it's speed, vast hardware support and ease of integration with common quantization technologies (such as bitsandbytes which is used for 4-bit quantization). vLLM-Metal is also used to support macOS devices, which requires Python 3.12 for now. Obscura is used for a "stealth" browser tool that can run persistently as it's own process, while Playwright + CDP is used to control it. Docker is used to launch and control [Degoog](https://github.com/degoog-org/degoog), which is a self-hosted search engine aggregator that provides an API for the backend to use for searching. In the future, I'll document more of what works and what doesn't for the AI/LLM portions, as I know that (for me personally) it is difficult to see what does and doesn't work amongst today's documentation.
 
 #### Mobile
 **Language**: Primarily TypeScript, with a smidge of JavaScript
+<br/>
 **Frameworks/Libraries**:
 * React/React Native
 * Expo
@@ -53,17 +60,20 @@ For AI/LLM, I currently utilize vLLM due to it's speed and ease of integration w
 * react-native-uuid
 * Nativewind/TailwindCSS
 * Axios
+<br/>
 **Tools**:
 * [Bun](https://bun.com)
-
+<br/>
 I utilize React/React Native due to the familiarity and experience I have with it when helping to develop [cinder](https://github.com/lhofstetter/cinder). I also utilize Expo for it's ease of use and vast set of libraries, as well as the simplicity it offers when building and deploying via EAS. React Navigation is used over Expo Router because I find the Expo Router development experience confusing and better suited to web development. React-native-uuid is used for generating UUIDs easily, while Nativewind is used for easy of styling. Axios is used for network requests to the backend.
 
 #### Web
 **Language**: Primarily TypeScript, with a smidge of JavaScript
+<br/>
 **Frameworks/Libraries**:
 * React
 * Vite
+<br/>
 **Tools**:
 * [Bun](https://bun.com)
-
+<br/>
 I've done nothing on this so far - my focus is on the backend and mobile app for now. I'll be fleshing out the web once I have a better feel for the UI from the app and which parts make sense on the web/what specific niches the web code will need to fulfill that the mobile app code can't, won't or shouldn't.

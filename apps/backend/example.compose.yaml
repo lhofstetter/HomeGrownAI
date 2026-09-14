@@ -1,0 +1,64 @@
+# Degoog + Valkey shared cache + PostgreSQL indexer backend.
+# Good for: high-traffic public instances that want both cross-process caching
+# and a fairly scalable indexer.
+
+services:
+  degoog:
+    image: ghcr.io/degoog-org/degoog:latest
+    volumes:
+      - degoog-data:/app/data
+    ports:
+      - "4444:4444"
+    restart: unless-stopped
+    environment:
+      # Leave both unset only for trusted local/LAN use. If this instance is
+      # reachable from the internet, SET A PASSWORD: an unlocked instance lets
+      # anyone install extensions, which runs code on the server.
+
+      # When "true", every admin and store action stays behind the password
+      # above even on a local network.
+      DEGOOG_SETTINGS_PASSWORDS: "${DEGOOG_DOCKER_PASSWD}"
+      DEGOOG_PUBLIC_INSTANCE: "false"
+      DEGOOG_VALKEY_URL: "redis://degoog-valkey:6379"
+      DEGOOG_POSTGRES: "postgresql://degoog:${DEGOOG_DOCKER_DB_PASSWD}@degoog-postgres:5432/degoog"
+    depends_on:
+      degoog-valkey:
+        condition: service_started
+      degoog-postgres:
+        condition: service_healthy
+
+  degoog-valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  degoog-postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: degoog
+      POSTGRES_USER: degoog
+      POSTGRES_PASSWORD: ${DEGOOG_DOCKER_DB_PASSWD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U degoog -d degoog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres-data:
+  degoog-data:

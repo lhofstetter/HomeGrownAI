@@ -5,7 +5,30 @@ description = "A self-hosted, 70-90% human-written AI backend for HomeGrownAI."
 requires-python = ">=3.12,<3.15"
 dependencies = [
     "alembic>=1.18.5",
-    "fastapi[standard]>=0.137.2",
+    "fastapi[standard]==0.136.3",
+    "numpy==2.3.5; sys_platform == 'darwin'",
+    "numpy>=2.4,<2.5; sys_platform == 'linux'",
+    "torch[device-gfx1201]==2.12.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "torch==2.13.0; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
+    "torchvision[device-gfx1201]==0.27.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "torchaudio==2.11.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    # uv's explicit AMD index requires its ROCm transitive packages to be
+    # declared so they do not fall back to PyPI during universal locking.
+    "rocm[libraries,device-gfx1201]==10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "rocm-bootstrap==0.1.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "rocm-sdk-core==10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "rocm-sdk-libraries==10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "rocm-sdk-device-gfx1201==10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "amd-torch-device-gfx12-0==2.12.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "amd-torch-device-gfx1201==2.12.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "amd-torchvision-device-gfx1201==0.27.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "triton==3.8.0+git4cff872c.rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "flash-attn==2.8.3; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "amd-aiter==0.1.20.post1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "tensorizer==2.12.1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "vllm==0.27.1.dev5+rocm10.0.0.gf46a9dfe2.d20260826; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "vllm==0.29.0; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
+    "vllm-metal==0.29.0; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
     "uvicorn>=0.36",
     "httptools>=0.8",
     "loguru>=0.7.3",
@@ -15,7 +38,7 @@ dependencies = [
     "pyjwt>=2.13.0",
     "sqlalchemy>=2.0.51",
     "uvloop>=0.22.1",
-    "bitsandbytes>=0.50.0",
+    "bitsandbytes==0.50.0",
     "huggingface-hub>=1.27.0",
     "markitdown[all]>=0.1.7",
     "systemdunitparser>=0.4; sys_platform == 'linux'",
@@ -28,17 +51,19 @@ dependencies = [
     "lxml>=6.1.1",
     "orjson>=3.12.0",
     "docker>=7.2.0",
+    "wenmode>=0.15.0",
+    "pymupdf4llm>=1.28.2",
+    "pytest>=9.1.1",
+    "hypothesis>=6.168.0",
+    "python-magic>=0.4.27",
+    "vllm-bnb-plugin>=0.0.3",
 ]
-
-[project.optional-dependencies]
-metal = []
-rocm = []
 
 [project.scripts]
 homegrownai = "homegrownai.cli:main"
 
 [build-system]
-requires = ["uv_build>=0.11.25,<0.12"]
+requires = ["uv_build>=0.11.25,<0.13"]
 build-backend = "uv_build"
 
 # Python 3.12 is used on macOS because vLLM Metal only officially supports Python 3.12, view any updates here:
@@ -53,13 +78,62 @@ environments = [
     "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
     "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
 ]
-
-conflicts = [
-    [
-        { extra = "metal" },
-        { extra = "rocm" },
-    ],
+override-dependencies = [
+    # AMD requires upgrading the vLLM wheel's tensorizer==2.10.1 pin.
+    "tensorizer==2.12.1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
 ]
+
+# Accelerator wheels are declared here so `uv sync` owns the entire
+# environment. Linux hosts still need `uv sync --python 3.14`; macOS uses the
+# repository's Python 3.12 pin with plain `uv sync`.
+# ROCm processes still require `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE` and
+# `_rocm_sdk_core/share/amd_smi` on `PYTHONPATH`; TOML cannot export runtime
+# environment variables or validate `/dev/kfd` and `rocminfo` GPU readiness.
+[tool.uv.sources]
+torch = [
+    { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+]
+torchvision = [
+    { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+]
+torchaudio = [
+    { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+]
+amd-torch-device-gfx12-0 = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+amd-torch-device-gfx1201 = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+amd-torchvision-device-gfx1201 = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+jinja2 = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+markupsafe = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+mpmath = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+networkx = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+rocm = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+rocm-bootstrap = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+rocm-sdk-core = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+rocm-sdk-device-gfx1201 = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+rocm-sdk-libraries = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+sympy = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+triton = { index = "amd-rocm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" }
+flash-attn = [
+    { index = "amd-vllm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+]
+amd-aiter = [
+    { index = "amd-vllm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+]
+vllm = [
+    { url = "https://rocm.frameworks.amd.com/whl-multi-arch/vllm/vllm/vllm-0.27.1.dev5%2Brocm10.0.0.gf46a9dfe2.d20260826-cp314-cp314-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+    { url = "https://github.com/vllm-project/vllm/releases/download/v0.29.0/vllm-0.29.0%2Bcpu-cp312-cp312-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'" },
+]
+vllm-metal = { url = "https://github.com/vllm-project/vllm-metal/releases/download/v0.29.0/vllm_metal-0.29.0-cp312-cp312-macosx_15_0_arm64.whl" }
+
+[[tool.uv.index]]
+name = "amd-rocm"
+url = "https://stable.repo.amd.com/rocm/whl-next/"
+explicit = true
+
+[[tool.uv.index]]
+name = "amd-vllm"
+url = "https://rocm.frameworks.amd.com/whl-multi-arch/vllm/"
+explicit = true
 
 [tool.alembic]
 
