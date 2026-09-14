@@ -85,7 +85,10 @@ async def register_account(
                 detail="Username or email is already registered with an account!",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        db.add(new_user)
         db.commit()
+
         access_token = create_access_token(user_id=str(new_user.id))
 
         return {
