@@ -38,6 +38,13 @@ class ModelNotFoundError(AIAppError):
         super().__init__("Model is not found on Hugging Face!")
 
 
+class PlatformNotSupportedError(AIAppError):
+    def __init__(self):
+        super().__init__(
+            "This platform is not supported currently. :( Please contact the developer if you believe this to be in error."
+        )
+
+
 class EmailAlreadyRegisteredError(UserRegistrationError):
     pass
 

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import UUID, DateTime, ForeignKey, Text, Uuid, func
+from sqlalchemy import UUID, DateTime, ForeignKey, Integer, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from homegrownai.database.db import Base
@@ -42,7 +42,13 @@ class DocumentChunk(Base):
 
     content: Mapped[str] = mapped_column(Text)
 
-    embedding: Mapped[list[float]] = mapped_column(Vector(4096), nullable=False)
+    line: Mapped[int] = mapped_column(Integer)
+
+    column: Mapped[int] = mapped_column(Integer)
+
+    offset: Mapped[int] = mapped_column(Integer)
+
+    embedding: Mapped[list[float]] = mapped_column(Vector(1024), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

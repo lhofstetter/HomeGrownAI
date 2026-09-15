@@ -1,17 +1,37 @@
+import os
+from collections.abc import AsyncGenerator
+from platform import system
+from uuid import uuid4
+
+if "darwin" in system().lower():
+    os.environ["VLLM_LOGGING_LEVEL"] = "ERROR"
+    os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
+    os.environ["VLLM_METAL_USE_PAGED_ATTENTION"] = "1"
+
 from collections.abc import Iterable
 from pathlib import Path
-from sys import stderr
+
+import pymupdf4llm
+from huggingface_hub import HfApi, ModelInfo
+from jinja2 import Environment, FileSystemLoader
+from loguru import logger
+from markitdown import MarkItDown
+from torch import cuda, mps, version, xpu
+from vllm import (
+    AsyncEngineArgs,
+    AsyncLLMEngine,
+    PoolingParams,
+    SamplingParams,
+    TextPrompt,
+    TokensPrompt,
+)
+from vllm.sampling_params import RequestOutputKind
+from wenmode import Wenmode
 
 from homegrownai.database.user import User
 from homegrownai.exceptions import AIAppError
 from homegrownai.schemas.user import Conversation
-from huggingface_hub import HfApi, ModelInfo
-from jinja2 import Environment, FileSystemLoader
-from loguru import logger
-from torch import cuda, mps, version, xpu
-from vllm import LLM
 
-logger.add(stderr, format="{time:MMMM D, YYYY > HH:mm:ss} | {extra} | {message}")
 PROMPT_DIRECTORY = Path(
     "/".join(str(Path(__file__).resolve()).split("/")[:-1]), "system_prompts"
 )
@@ -41,6 +61,8 @@ class InferenceEngine:
         file_loader = FileSystemLoader(PROMPT_DIRECTORY)
         self.env = Environment(loader=file_loader)
         self.template = self.env.get_template("generic.md.jinja")
+        self.markitdown_converter = MarkItDown(enable_plugins=False)
+        self.ast_parser = Wenmode(positions=True)
 
         model_id = first_model_result.id.split(
             "/"
@@ -82,31 +104,77 @@ class InferenceEngine:
         if (
             first_model_result.config == None
         ):  # hacky workaround, should check both if config is none OR if it doesn't specify bitsandbytes quantization in the config
-            self.engine = LLM(
+            self.engine_args = AsyncEngineArgs(
                 model=model_path_on_hf,
                 dtype="auto",
                 enable_prefix_caching=True,
                 trust_remote_code=True,
-                kv_cache_dtype=self.supported_kv_quantization[-1],
-                calculate_kv_scales=True,
+                kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 hf_token=True,
-                max_model_len=32768,
-                max_num_seqs=2,
+                max_model_len=16384,
+                max_num_seqs=4,
+                disable_log_stats=True,
+                language_model_only=True,
             )
+            self.engine = AsyncLLMEngine.from_engine_args(self.engine_args)
             self.quantization_method = "native/none"
         else:
-            self.engine = LLM(
+            self.engine_args = AsyncEngineArgs(
                 model=model_path_on_hf,
                 dtype="auto",
                 enable_prefix_caching=True,
                 trust_remote_code=True,
-                kv_cache_dtype=self.supported_kv_quantization[-1],
+                kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 quantization="bitsandbytes",
                 load_format="bitsandbytes",
-                calculate_kv_scales=True,
                 hf_token=True,
+                max_model_len=16384,
+                max_num_seqs=4,
+                language_model_only=True,
             )
+            self.engine = AsyncLLMEngine.from_engine_args(self.engine_args)
             self.quantization_method = "bitsandbytes"
+
+        self.tokenizer = self.engine.get_tokenizer()
+        self.engine_sampling_args = SamplingParams(
+            temperature=1.0,
+            top_p=0.95,
+            top_k=20,
+            min_p=0.0,
+            presence_penalty=0.0,
+            repetition_penalty=1.0,
+            output_kind=RequestOutputKind.DELTA,
+        )  # this is for Qwen/Qwen3.8-27B in particular
+
+        if "darwin" in system().lower():
+            self.embedding_engine_args = AsyncEngineArgs(
+                model="mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ",
+                runner="pooling",
+                dtype="auto",
+                trust_remote_code=True,
+                hf_token=True,
+                max_model_len=3072,
+                max_num_seqs=4,
+            )
+            self.embedding_engine = AsyncLLMEngine.from_engine_args(
+                self.embedding_engine_args
+            )
+        elif "linux" in system().lower():
+            self.embedding_engine_args = AsyncEngineArgs(
+                model="Qwen/Qwen3-Embedding-0.6B",
+                runner="pooling",
+                dtype="auto",
+                trust_remote_code=True,
+                hf_token=True,
+                max_model_len=3072,
+                max_num_seqs=4,
+            )
+            self.embedding_engine = AsyncLLMEngine.from_engine_args(
+                self.embedding_engine_args
+            )
+
+        self.embedding_tokenizer = self.embedding_engine.get_tokenizer()
+        self.embedding_pooling_args = PoolingParams(task="embed", use_activation=True)
         self.model_id = first_model_result.id
         self.conversations = {}
         self.reasoning_effort = "med"
@@ -135,20 +203,26 @@ class InferenceEngine:
             },
         ]
 
-    def new_conversation(self, user: User, conversation: Conversation):
+    def shutdown(self):
+        self.engine.shutdown()
+        self.embedding_engine.shutdown()
+
+    async def new_conversation(
+        self, message: str, user: User
+    ) -> AsyncGenerator[str | tuple[Conversation, str], None]:
         template_items: dict[str, str] = {}
 
-        if len(user.custom_model_name) > 0:
+        if user.custom_model_name is not None:
             template_items["name"] = user.custom_model_name
         else:
             template_items["name"] = "Nova"
 
-        if len(user.human_name) > 0:
+        if user.human_name is not None:
             template_items["human_name"] = user.human_name
         else:
             template_items["human_name"] = "User"
 
-        if len(user.custom_model_instructions) > 0:
+        if user.custom_model_instructions is not None:
             template_items["user_instructions"] = user.custom_model_instructions
         else:
             template_items["user_instructions"] = "The user has no custom instructions."
@@ -160,21 +234,87 @@ class InferenceEngine:
             tools=self.tools,
         )
 
-        if conversation.attachments == None:
-            raise AIAppError("No attachments in the conversation to produce text!")
+        if len(message) == 0:
+            raise AIAppError("No message to produce text!")
 
-        conversation.attachments = [
+        attachments = [
             {"role": "system", "content": system_prompt},
-            conversation.attachments[-1],
+            {"role": "user", "content": message},
         ]
 
-        outputs = self.engine.chat(conversation.attachments)  # ty: ignore
-
-        conversation.attachments.append(
-            {"role": "assistant", "content": outputs[0].outputs[0].text}
+        conversation = Conversation(
+            conversationTitle="New Conversation",
+            conversationID=str(uuid4()),
+            modelID=self.engine.model_config.model,
+            attachments=attachments,
         )
 
-        return conversation.attachments
+        formatted_conversation = self.tokenizer.apply_chat_template(
+            attachments, tokenize=True, add_generation_prompt=True
+        )  # ty: ignore
 
-    def reply(self, user: User, conversation: Conversation):
-        pass
+        token_ids = formatted_conversation["input_ids"]  # ty: ignore
+
+        stage = 0
+
+        async for output in self.engine.generate(
+            TokensPrompt(prompt_token_ids=token_ids),
+            self.engine_sampling_args,
+            conversation.conversationID,
+        ):
+            if stage == 0:
+                stage += 1
+                yield (conversation, output.outputs[0].text)
+            else:
+                yield output.outputs[0].text
+
+    async def reply(self, message: str, conversation: Conversation):
+        if len(message) == 0:
+            raise AIAppError("No message to produce text!")
+        elif conversation.attachments == None:
+            raise AIAppError("No existing conversation to respond to!")
+        else:
+            conversation.attachments.append({"user": message})
+
+            formatted_conversation = self.tokenizer.apply_chat_template(
+                conversation.attachments, tokenize=True, add_generation_prompt=True
+            )  # ty: ignore
+
+            token_ids = formatted_conversation["input_ids"]  # ty: ignore
+
+            stage = 0
+
+            async for output in self.engine.generate(
+                TokensPrompt(prompt_token_ids=token_ids),
+                self.engine_sampling_args,
+                conversation.conversationID,
+            ):
+                if stage == 0:
+                    stage += 1
+                    yield (conversation, output.outputs[0].text)
+                else:
+                    yield output.outputs[0].text
+
+    async def generate_embeddings(self, file_path_or_text: Path | str):
+        if isinstance(file_path_or_text, Path):
+            if file_path_or_text.is_file():
+                markdown_txt = self.markitdown_converter.convert(file_path_or_text)
+                if len(markdown_txt.markdown) == 0:
+                    markdown_txt = pymupdf4llm.to_markdown(file_path_or_text)
+                if isinstance(markdown_txt, str):
+                    ast = self.ast_parser.parse(markdown_txt).to_ast()
+                else:
+                    ast = self.ast_parser.parse(markdown_txt.markdown).to_ast()
+        else:
+            ast = self.ast_parser.parse(file_path_or_text).to_ast()
+
+        for child in ast["children"]:
+            if child["type"] == "paragraph":
+                paragraph_text = ""
+                for sentences in child["children"]:
+                    paragraph_text += sentences["value"]
+                yield self.embedding_engine.encode(
+                    TextPrompt(paragraph_text),
+                    pooling_params=self.embedding_pooling_args,
+                    request_id=str(uuid4()),
+                )  # ty: ignore

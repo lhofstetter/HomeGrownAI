@@ -9,10 +9,10 @@ class Settings(BaseSettings):
     db_host: str
     db_port: int
     db_name: str
-    model_url: str
-    model_api_key: SecretStr
     jwt_secret: str
     jwt_algorithm: str = "HS256"
+    test_user: str
+    test_password: str
     access_token_expire_minutes: int = 15
     degoog_docker_passwd: SecretStr
     degoog_docker_db_passwd: SecretStr

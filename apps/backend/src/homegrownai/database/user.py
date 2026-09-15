@@ -31,7 +31,7 @@ class User(Base):
     email: Mapped[str]
     registration_date: Mapped[date]
     is_active: Mapped[bool]
-    deletion_date: Mapped[date]
+    deletion_date: Mapped[date | None]
     conversations: Mapped[list[Conversation]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -42,9 +42,9 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    custom_model_name: Mapped[str]
-    custom_model_instructions: Mapped[str]
-    human_name: Mapped[str]
+    custom_model_name: Mapped[str | None]
+    custom_model_instructions: Mapped[str | None]
+    human_name: Mapped[str | None]
 
 
 def add_user(database: DB, new_user: User):
