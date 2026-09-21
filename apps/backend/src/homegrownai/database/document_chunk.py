@@ -36,10 +36,6 @@ class DocumentChunk(Base):
         unique=True,
     )
 
-    section_title: Mapped[str] = mapped_column(Text)
-
-    path_to_chunk: Mapped[str] = mapped_column(Text)
-
     content: Mapped[str] = mapped_column(Text)
 
     line: Mapped[int] = mapped_column(Integer)

@@ -45,6 +45,16 @@ class PlatformNotSupportedError(AIAppError):
         )
 
 
+class FileTypeMismatchError(AIAppError):
+    def __init__(self):
+        super().__init__("File type passed did not match the actual data given.")
+
+
+class UploadError(AIAppError):
+    def __init__(self):
+        super().__init__("File upload error. Please try again later.")
+
+
 class EmailAlreadyRegisteredError(UserRegistrationError):
     pass
 

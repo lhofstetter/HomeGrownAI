@@ -1,6 +1,8 @@
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Iterable
+from pathlib import Path
 from platform import system
+from typing import Literal
 from uuid import uuid4
 
 if "darwin" in system().lower():
@@ -8,14 +10,15 @@ if "darwin" in system().lower():
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
     os.environ["VLLM_METAL_USE_PAGED_ATTENTION"] = "1"
 
-from collections.abc import Iterable
-from pathlib import Path
 
 import pymupdf4llm
+from anyio import open_file
 from huggingface_hub import HfApi, ModelInfo
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
+from markdownify import markdownify as md
 from markitdown import MarkItDown
+from md2docx_python.src.docx2md_python import word_to_markdown
 from torch import cuda, mps, version, xpu
 from vllm import (
     AsyncEngineArgs,
@@ -29,7 +32,7 @@ from vllm.sampling_params import RequestOutputKind
 from wenmode import Wenmode
 
 from homegrownai.database.user import User
-from homegrownai.exceptions import AIAppError
+from homegrownai.exceptions import AIAppError, FileTypeMismatchError
 from homegrownai.schemas.user import Conversation
 
 PROMPT_DIRECTORY = Path(
@@ -175,6 +178,9 @@ class InferenceEngine:
 
         self.embedding_tokenizer = self.embedding_engine.get_tokenizer()
         self.embedding_pooling_args = PoolingParams(task="embed", use_activation=True)
+        self.converted_documents_directory = Path("converted_documents")
+        if not self.converted_documents_directory.exists():
+            self.converted_documents_directory.mkdir()
         self.model_id = first_model_result.id
         self.conversations = {}
         self.reasoning_effort = "med"
@@ -250,8 +256,10 @@ class InferenceEngine:
         )
 
         formatted_conversation = self.tokenizer.apply_chat_template(
-            attachments, tokenize=True, add_generation_prompt=True
-        )  # ty: ignore
+            attachments,  # ty: ignore
+            tokenize=True,
+            add_generation_prompt=True,
+        )
 
         token_ids = formatted_conversation["input_ids"]  # ty: ignore
 
@@ -277,8 +285,10 @@ class InferenceEngine:
             conversation.attachments.append({"user": message})
 
             formatted_conversation = self.tokenizer.apply_chat_template(
-                conversation.attachments, tokenize=True, add_generation_prompt=True
-            )  # ty: ignore
+                conversation.attachments,  # ty:ignore
+                tokenize=True,
+                add_generation_prompt=True,
+            )
 
             token_ids = formatted_conversation["input_ids"]  # ty: ignore
 
@@ -295,26 +305,75 @@ class InferenceEngine:
                 else:
                     yield output.outputs[0].text
 
-    async def generate_embeddings(self, file_path_or_text: Path | str):
-        if isinstance(file_path_or_text, Path):
-            if file_path_or_text.is_file():
+    async def generate_embeddings(
+        self,
+        file_path_or_text: Path | str,
+        type_of_file: Literal["pdf", "word_document", "webpage", "plaintext"],
+    ):
+        if type_of_file == "pdf" and isinstance(file_path_or_text, Path):
+            if file_path_or_text.exists() and file_path_or_text.is_file():
                 markdown_txt = self.markitdown_converter.convert(file_path_or_text)
                 if len(markdown_txt.markdown) == 0:
                     markdown_txt = pymupdf4llm.to_markdown(file_path_or_text)
+
                 if isinstance(markdown_txt, str):
                     ast = self.ast_parser.parse(markdown_txt).to_ast()
                 else:
                     ast = self.ast_parser.parse(markdown_txt.markdown).to_ast()
-        else:
-            ast = self.ast_parser.parse(file_path_or_text).to_ast()
+            else:
+                raise FileTypeMismatchError
+        elif type_of_file == "word_document" and isinstance(file_path_or_text, Path):
+            if file_path_or_text.exists() and file_path_or_text.is_file():
+                markdown_txt = self.markitdown_converter.convert(file_path_or_text)
 
-        for child in ast["children"]:
+                if len(markdown_txt.markdown) == 0:
+                    _path = str(file_path_or_text).split(".")[0] + ".md"
+                    word_to_markdown(
+                        file_path_or_text,
+                        Path(
+                            file_path_or_text.parent,
+                            str(file_path_or_text).split(".")[0] + ".md",
+                        ),
+                    )
+
+                    async with await open_file(_path, "r") as f:
+                        markdown_txt = await f.read()
+
+                    ast = self.ast_parser.parse(markdown_txt).to_ast()
+                else:
+                    ast = self.ast_parser.parse(markdown_txt.markdown).to_ast()
+            else:
+                raise FileTypeMismatchError
+        elif type_of_file == "webpage" and isinstance(file_path_or_text, Path):
+            if file_path_or_text.exists() and file_path_or_text.is_file():
+                markdown_txt = self.markitdown_converter.convert(file_path_or_text)
+
+                if len(markdown_txt.markdown) == 0:
+                    async with await open_file(file_path_or_text, "r") as f:
+                        markdown_txt = md(await f.read(), strip=["img"])
+
+                    ast = self.ast_parser.parse(markdown_txt).to_ast()
+                else:
+                    ast = self.ast_parser.parse(markdown_txt.markdown).to_ast()
+            else:
+                raise FileNotFoundError
+        else:
+            if isinstance(file_path_or_text, str):
+                ast = self.ast_parser.parse(file_path_or_text).to_ast()
+            else:
+                raise FileTypeMismatchError
+
+        for i, child in enumerate(ast["children"]):
             if child["type"] == "paragraph":
                 paragraph_text = ""
                 for sentences in child["children"]:
                     paragraph_text += sentences["value"]
-                yield self.embedding_engine.encode(
-                    TextPrompt(paragraph_text),
-                    pooling_params=self.embedding_pooling_args,
-                    request_id=str(uuid4()),
-                )  # ty: ignore
+                yield (
+                    self.embedding_engine.encode(
+                        TextPrompt(paragraph_text),  # ty: ignore
+                        pooling_params=self.embedding_pooling_args,
+                        request_id=str(uuid4()),
+                    ),
+                    child["position"],
+                    i == len(ast["children"]) - 1,
+                )

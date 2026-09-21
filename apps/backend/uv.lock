@@ -1196,6 +1196,8 @@ dependencies = [
     { name = "amd-torch-device-gfx12-0", marker = "sys_platform == 'linux'" },
     { name = "amd-torch-device-gfx1201", marker = "sys_platform == 'linux'" },
     { name = "amd-torchvision-device-gfx1201", marker = "sys_platform == 'linux'" },
+    { name = "anyio" },
+    { name = "beautifulsoup4" },
     { name = "bitsandbytes" },
     { name = "docker" },
     { name = "fastapi", extra = ["standard"] },
@@ -1206,7 +1208,9 @@ dependencies = [
     { name = "launchd" },
     { name = "loguru" },
     { name = "lxml" },
+    { name = "markdownify" },
     { name = "markitdown", extra = ["all"] },
+    { name = "md2docx-python" },
     { name = "niquests" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux'" },
@@ -1256,6 +1260,8 @@ requires-dist = [
     { name = "amd-torch-device-gfx12-0", marker = "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.12.0+rocm10.0.0", index = "https://stable.repo.amd.com/rocm/whl-next/" },
     { name = "amd-torch-device-gfx1201", marker = "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.12.0+rocm10.0.0", index = "https://stable.repo.amd.com/rocm/whl-next/" },
     { name = "amd-torchvision-device-gfx1201", marker = "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==0.27.0+rocm10.0.0", index = "https://stable.repo.amd.com/rocm/whl-next/" },
+    { name = "anyio", specifier = ">=4.14.1" },
+    { name = "beautifulsoup4", specifier = ">=4.15.0" },
     { name = "bitsandbytes", specifier = "==0.50.0" },
     { name = "docker", specifier = ">=7.2.0" },
     { name = "fastapi", extras = ["standard"], specifier = "==0.136.3" },
@@ -1265,7 +1271,9 @@ requires-dist = [
     { name = "launchd", specifier = ">=1.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "lxml", specifier = ">=6.1.1" },
+    { name = "markdownify", specifier = ">=1.2.3" },
     { name = "markitdown", extras = ["all"], specifier = ">=0.1.7" },
+    { name = "md2docx-python", specifier = ">=1.0.0" },
     { name = "niquests", specifier = ">=3.21.0" },
     { name = "numpy", marker = "sys_platform == 'darwin'", specifier = "==2.3.5" },
     { name = "numpy", marker = "sys_platform == 'linux'", specifier = ">=2.4,<2.5" },
@@ -1786,6 +1794,15 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown"
+version = "3.10.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/6f/da4c6aea59b3001f2e8c0ec7497475aadaf3b021c10cab5b2858f0f32b26/markdown-3.10.3.tar.gz", hash = "sha256:3589362618f743188b4d955b874402bc814f4f83f544dc207719f4baa7d9c45f", size = 372596, upload-time = "2026-07-30T19:05:29.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/69/4a5af2bc115a9a33fefe51709749de8262be3f9ba063d1753a837cdbc49c/markdown-3.10.3-py3-none-any.whl", hash = "sha256:fa6c92a00a4a3c98b22728c64a935ae1928250ae65058a6ded814d2cc29a4cea", size = 110757, upload-time = "2026-07-30T19:05:27.883Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1919,6 +1936,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ae/91/762d7755d971aff8a28d75f7961656148edf27875c8026e6385aaab08ae7/mcp_types-2.2.0.tar.gz", hash = "sha256:d3ed53703ddd10d9c6399f29d322bb66f3f67ab41348ac8556ba23e07fedefad", size = 65892, upload-time = "2026-09-07T16:06:25.187Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/d7/6ffba5d8cd5dd9b8a19478875c50e04945314ba5074e84d749283f27f62d/mcp_types-2.2.0-py3-none-any.whl", hash = "sha256:ea476b73ee86709ab5abc9452385ed36cc05907e582355622e294595c9a04f13", size = 69106, upload-time = "2026-09-07T16:06:21.461Z" },
+]
+
+[[package]]
+name = "md2docx-python"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "markdown" },
+    { name = "python-docx" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/04/e9d465ab990fc2a28821b8d01d710066b32c814e24b3e9565644201d0d65/md2docx_python-1.0.0-py3-none-any.whl", hash = "sha256:96bb93905222d333368ceb0403bf4d1dc80a8bd70f6ae2e8ae6912c575e905d8", size = 7094, upload-time = "2025-03-14T15:47:54.958Z" },
 ]
 
 [[package]]
@@ -3319,6 +3349,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+]
+
+[[package]]
+name = "python-docx"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "lxml" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a9/f7/eddfe33871520adab45aaa1a71f0402a2252050c14c7e3009446c8f4701c/python_docx-1.2.0.tar.gz", hash = "sha256:7bc9d7b7d8a69c9c02ca09216118c86552704edc23bac179283f2e38f86220ce", size = 5723256, upload-time = "2025-06-16T20:46:27.921Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/00/1e03a4989fa5795da308cd774f05b704ace555a70f9bf9d3be057b680bcf/python_docx-1.2.0-py3-none-any.whl", hash = "sha256:3fd478f3250fbbbfd3b94fe1e985955737c145627498896a8a6bf81f4baf66c7", size = 252987, upload-time = "2025-06-16T20:46:22.506Z" },
 ]
 
 [[package]]

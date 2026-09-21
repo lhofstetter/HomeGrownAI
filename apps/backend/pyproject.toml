@@ -54,6 +54,10 @@ dependencies = [
     "pymupdf4llm>=1.28.2",
     "python-magic>=0.4.27",
     "vllm-bnb-plugin>=0.0.3",
+    "md2docx-python>=1.0.0",
+    "beautifulsoup4>=4.15.0",
+    "markdownify>=1.2.3",
+    "anyio>=4.14.1",
 ]
 
 [project.scripts]
