@@ -26,9 +26,13 @@ class User(Base):
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    username: Mapped[str]
+    username: Mapped[str] = mapped_column(
+        unique=True,
+    )
     hashed_password: Mapped[str]
-    email: Mapped[str]
+    email: Mapped[str] = mapped_column(
+        unique=True,
+    )
     registration_date: Mapped[date]
     is_active: Mapped[bool]
     deletion_date: Mapped[date | None]

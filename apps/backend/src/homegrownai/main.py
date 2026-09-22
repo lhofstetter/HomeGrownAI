@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from loguru import logger
 
 from homegrownai.ai.engine import InferenceEngine
+from homegrownai.api.routes.files import files_router
 from homegrownai.api.routes.users import users_router
 from homegrownai.database.schema import ensure_database_schema
 
@@ -41,6 +42,7 @@ app = FastAPI(
     root_path="/api",
 )
 app.include_router(users_router)
+app.include_router(files_router)
 
 
 @app.get("/")

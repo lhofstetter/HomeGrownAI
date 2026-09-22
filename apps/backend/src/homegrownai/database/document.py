@@ -30,6 +30,11 @@ class Document(Base):
         nullable=False,
     )
 
+    original_file_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
     embedding_model_id: Mapped[str] = mapped_column(
         String(255),
         nullable=True,

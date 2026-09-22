@@ -1,8 +1,10 @@
+from ipaddress import ip_address, ip_network
 from os import environ
 from pathlib import Path
 from platform import machine, system
 from shlex import split
 from shutil import move, which
+from socket import AF_UNSPEC, gaierror, getaddrinfo, gethostbyname, gethostname
 from subprocess import DEVNULL, CalledProcessError, Popen, run
 from sys import exit
 from urllib.parse import urlencode
@@ -13,6 +15,7 @@ from homegrownai.exceptions import AIAppError
 from loguru import logger
 from niquests import get
 from playwright.sync_api import sync_playwright
+from urllib3.util import parse_url
 
 
 class Browser:
@@ -124,10 +127,45 @@ class Browser:
             return results
 
     def navigate_to_site(self, link: str) -> str:
-        browser = self.browser.new_context().new_page()
+        parsed_url = parse_url(link)
 
-        if get(link).status_code != 200:
-            raise AIAppError("Error when accessing the webpage!")
-        browser.goto(link)
+        if parsed_url[0] == "http":
+            raise AIAppError("Attempting to access insecure webpage!")
+        elif parsed_url[3] != None and (
+            parsed_url[0] == None or "file" in parsed_url[0]
+        ):
+            raise AIAppError(
+                "Attempting to access a file-system path or passing a port to the URL!"
+            )
+        else:
+            try:
+                if str(parsed_url[2]) == "localhost":
+                    raise AIAppError("Attempting to access an IP address directly!")
 
-        return browser.inner_html("body")
+                ip_address(str(parsed_url[2]))
+
+                raise AIAppError("Attemping to access an IP address directly!")
+            except ValueError:
+                try:
+                    results = getaddrinfo(parsed_url[2], None, AF_UNSPEC)
+
+                    ips = {res[4][0] for res in results}
+
+                    hostname = gethostname()
+                    local_ip = gethostbyname(hostname)
+
+                    local_subnet = ip_network(local_ip, strict=False)
+
+                    for ip in ips:
+                        if ip in local_subnet:
+                            raise AIAppError("IP address is inside the local subnet!")
+                except gaierror:
+                    raise AIAppError("gaierror")
+
+                browser = self.browser.new_context().new_page()
+
+                if get(link).status_code != 200:
+                    raise AIAppError("Error when accessing the webpage!")
+                browser.goto(link)
+
+                return browser.inner_html("body")

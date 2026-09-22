@@ -27,8 +27,8 @@ async def login(
             db.query(User)
             .filter(
                 or_(
-                    User.email == form_data.username,
-                    User.username == form_data.username,
+                    User.email == form_data.username.lower(),
+                    User.username == form_data.username.lower(),
                 )
             )
             .first()
@@ -63,9 +63,9 @@ async def register_account(
 ):
     hasher = PasswordHash.recommended()
     new_user = User(
-        username=signup_form.username,
+        username=signup_form.username.lower(),
         hashed_password=hasher.hash(signup_form.password),
-        email=signup_form.email,
+        email=signup_form.email.lower(),
         registration_date=datetime.now(timezone.utc),
         is_active=True,
     )

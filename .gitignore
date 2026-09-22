@@ -1,6 +1,5 @@
 .env*
 *pycache*
-docs/
 expo-env.d.ts
 .expo/
 .ruff_cache*

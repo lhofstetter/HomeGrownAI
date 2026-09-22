@@ -111,7 +111,7 @@ class InferenceEngine:
                 model=model_path_on_hf,
                 dtype="auto",
                 enable_prefix_caching=True,
-                trust_remote_code=True,
+                trust_remote_code=False,
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 hf_token=True,
                 max_model_len=16384,
@@ -126,7 +126,7 @@ class InferenceEngine:
                 model=model_path_on_hf,
                 dtype="auto",
                 enable_prefix_caching=True,
-                trust_remote_code=True,
+                trust_remote_code=False,
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 quantization="bitsandbytes",
                 load_format="bitsandbytes",
@@ -154,7 +154,7 @@ class InferenceEngine:
                 model="mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ",
                 runner="pooling",
                 dtype="auto",
-                trust_remote_code=True,
+                trust_remote_code=False,
                 hf_token=True,
                 max_model_len=3072,
                 max_num_seqs=4,
@@ -167,7 +167,7 @@ class InferenceEngine:
                 model="Qwen/Qwen3-Embedding-0.6B",
                 runner="pooling",
                 dtype="auto",
-                trust_remote_code=True,
+                trust_remote_code=False,
                 hf_token=True,
                 max_model_len=3072,
                 max_num_seqs=4,
@@ -364,16 +364,19 @@ class InferenceEngine:
                 raise FileTypeMismatchError
 
         for i, child in enumerate(ast["children"]):
+            text = ""
             if child["type"] == "paragraph":
-                paragraph_text = ""
                 for sentences in child["children"]:
-                    paragraph_text += sentences["value"]
-                yield (
-                    self.embedding_engine.encode(
-                        TextPrompt(paragraph_text),  # ty: ignore
-                        pooling_params=self.embedding_pooling_args,
-                        request_id=str(uuid4()),
-                    ),
-                    child["position"],
-                    i == len(ast["children"]) - 1,
-                )
+                    text += sentences["value"]
+            elif "value" in child:
+                text += child["value"]
+            yield (
+                text,
+                self.embedding_engine.encode(
+                    TextPrompt(text),  # ty: ignore
+                    pooling_params=self.embedding_pooling_args,
+                    request_id=str(uuid4()),
+                ),
+                child["position"],
+                i == len(ast["children"]) - 1,
+            )

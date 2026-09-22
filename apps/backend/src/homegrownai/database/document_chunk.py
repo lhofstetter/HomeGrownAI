@@ -33,7 +33,6 @@ class DocumentChunk(Base):
     index: Mapped[int] = mapped_column(
         nullable=False,
         index=True,
-        unique=True,
     )
 
     content: Mapped[str] = mapped_column(Text)
