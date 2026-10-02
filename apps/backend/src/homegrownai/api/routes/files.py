@@ -5,6 +5,7 @@ from uuid import uuid4
 from anyio import open_file
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from magic import from_buffer
+from sqlalchemy import and_
 
 from homegrownai.ai.engine import InferenceEngine
 from homegrownai.database.db import DBSession
@@ -49,8 +50,6 @@ async def upload_file(
 
     if not user_directory.exists():
         user_directory.mkdir()
-
-    file_path = Path()
 
     # basically copied from https://oneuptime.com/blog/post/2026-01-26-fastapi-file-uploads/view
     size = 0
@@ -181,12 +180,8 @@ async def upload_file(
                 plaintext_or_source_directory.mkdir()
 
             file_id = str(uuid4())
-            file_extension = ""
 
-            if "." not in str(file.filename):  # there's no file extension!
-                file_extension += ".txt"
-            else:
-                file_extension += str(file.filename).split(".")[-1]
+            file_extension = "".join(Path(file.filename).suffixes)
             file_name = file_id + file_extension
 
             file_path = Path(plaintext_or_source_directory, file_name)
@@ -198,6 +193,7 @@ async def upload_file(
 
         with session as db:
             d = Document(
+                id=file_id,
                 title=file_name,
                 original_file_name=str(file.filename),
                 user=current_user,
@@ -213,6 +209,7 @@ async def upload_file(
             ) in e.generate_embeddings(file_path, file_input_parameter):
                 async for output in embedding_gen:
                     dc = DocumentChunk(
+                        document_id=file_id,
                         content=original_content,
                         embedding=output.outputs.embedding,
                         column=positions["start"]["column"],
@@ -238,9 +235,31 @@ async def upload_file(
 @files_router.delete("/files/{file_id}")
 async def delete_file(
     file_id: str,
-    request: Request,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[DBSession, Depends(get_db_session)],
 ):
+    if len(file_id) > 36:
+        raise HTTPException(
+            status_code=400,
+            detail="File ID is too long! It needs to be less than or equal to 36 characters in length!",
+        )
 
-    pass
+    with session as db:
+        d: Document | None = (
+            db.query(Document)
+            .filter(and_(Document.id == file_id, User.id == current_user.id))
+            .first()
+        )
+
+        if d == None:
+            raise HTTPException(
+                status_code=400,
+                detail="An error occurred when attempting to delete the file.",
+            )
+        else:
+            db.delete(d)
+            db.commit()
+
+    return {
+        "result": "File deletion success!",
+    }
