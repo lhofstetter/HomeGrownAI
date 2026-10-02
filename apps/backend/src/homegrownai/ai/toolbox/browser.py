@@ -1,10 +1,10 @@
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_address
 from os import environ
 from pathlib import Path
 from platform import machine, system
 from shlex import split
 from shutil import move, which
-from socket import AF_UNSPEC, gaierror, getaddrinfo, gethostbyname, gethostname
+from socket import AF_UNSPEC, gaierror, getaddrinfo
 from subprocess import DEVNULL, CalledProcessError, Popen, run
 from sys import exit
 from urllib.parse import urlencode
@@ -111,6 +111,21 @@ class Browser:
             if "degoog" in container.name:
                 container.stop()
 
+    def secure_route(self, route):
+        parsed = parse_url(route.request.url)
+
+        if parsed.scheme != "https":
+            route.abort("blockedbyclient")
+            return
+
+        route.continue_()
+
+    def block_websocket(self, ws):
+        ws.close(
+            code=1008,
+            reason="WebSockets are disabled",
+        )
+
     def web_search(self, search_query: str) -> dict[str, str]:
         params = urlencode({"q": search_query})
         response = get(f"http://localhost:4444/api/search?{params}")
@@ -129,43 +144,40 @@ class Browser:
     def navigate_to_site(self, link: str) -> str:
         parsed_url = parse_url(link)
 
-        if parsed_url[0] == "http":
+        if parsed_url.scheme != "https":
             raise AIAppError("Attempting to access insecure webpage!")
-        elif parsed_url[3] != None and (
-            parsed_url[0] == None or "file" in parsed_url[0]
-        ):
-            raise AIAppError(
-                "Attempting to access a file-system path or passing a port to the URL!"
-            )
+        elif parsed_url.host is None:
+            raise AIAppError("URL does not contain a hostname!")
         else:
             try:
-                if str(parsed_url[2]) == "localhost":
-                    raise AIAppError("Attempting to access an IP address directly!")
+                ip_address(str(parsed_url.host))
 
-                ip_address(str(parsed_url[2]))
-
-                raise AIAppError("Attemping to access an IP address directly!")
+                raise AIAppError("Attempting to access an IP address directly!")
             except ValueError:
                 try:
                     results = getaddrinfo(parsed_url[2], None, AF_UNSPEC)
 
                     ips = {res[4][0] for res in results}
 
-                    hostname = gethostname()
-                    local_ip = gethostbyname(hostname)
-
-                    local_subnet = ip_network(local_ip, strict=False)
-
                     for ip in ips:
-                        if ip in local_subnet:
-                            raise AIAppError("IP address is inside the local subnet!")
-                except gaierror:
-                    raise AIAppError("gaierror")
+                        converted_ip = ip_address(ip)
+                        if converted_ip.is_multicast or not converted_ip.is_global:
+                            raise AIAppError(
+                                "Destination IP address is not a public IP address!"
+                            )
+                except gaierror as e:
+                    raise AIAppError("Couldn't resolve hostname!") from e
 
-                browser = self.browser.new_context().new_page()
-
-                if get(link).status_code != 200:
+                if get(link, allow_redirects=False, timeout=10).status_code != 200:
                     raise AIAppError("Error when accessing the webpage!")
-                browser.goto(link)
+                else:
+                    context = self.browser.new_context(service_workers="block")
 
-                return browser.inner_html("body")
+                    context.route("**/*", self.secure_route)
+                    context.route_web_socket("**/*", self.block_websocket)
+
+                    browser = context.new_page()
+
+                    browser.goto(link)
+
+                    return browser.inner_html("body")
