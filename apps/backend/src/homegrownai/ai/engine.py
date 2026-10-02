@@ -36,8 +36,12 @@ from homegrownai.exceptions import AIAppError, FileTypeMismatchError
 from homegrownai.schemas.user import Conversation
 
 PROMPT_DIRECTORY = Path(
-    "/".join(str(Path(__file__).resolve()).split("/")[:-1]), "system_prompts"
+    "/".join(str(Path(__file__).resolve()).split("/")[:-1]), "prompts", "system_prompts"
 )
+UTILITY_PROMPT_DIRECTORY = Path(
+    "/".join(str(Path(__file__).resolve()).split("/")[:-1]), "prompts"
+)
+
 
 if not PROMPT_DIRECTORY.is_dir():
     raise AIAppError("system_prompts is not a directory!")
@@ -51,7 +55,7 @@ else:
 
 
 class InferenceEngine:
-    def __init__(self, model_path_on_hf: str):
+    def __init__(self, model_path_on_hf: str, context_window_len: int = 16384):
         self.api = HfApi()
         self.system_prompt = ""
 
@@ -62,9 +66,15 @@ class InferenceEngine:
         first_model_result = next(model_results)
 
         file_loader = FileSystemLoader(PROMPT_DIRECTORY)
+        utility_prompt_loader = FileSystemLoader(UTILITY_PROMPT_DIRECTORY)
         self.env = Environment(loader=file_loader)
+        self.utility_env = Environment(loader=utility_prompt_loader)
         self.template = self.env.get_template("generic.md.jinja")
-        self.markitdown_converter = MarkItDown(enable_plugins=False)
+        self.summary_template = self.utility_env.get_template(
+            "summarization_prompt.md.jinja"
+        )
+
+        self.markitdown_converter = MarkItDown(enable_plugins=True)
         self.ast_parser = Wenmode(positions=True)
 
         model_id = first_model_result.id.split(
@@ -114,8 +124,8 @@ class InferenceEngine:
                 trust_remote_code=False,
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 hf_token=True,
-                max_model_len=16384,
-                max_num_seqs=4,
+                max_model_len=context_window_len,
+                max_num_seqs=2,
                 disable_log_stats=True,
                 language_model_only=True,
             )
@@ -131,8 +141,8 @@ class InferenceEngine:
                 quantization="bitsandbytes",
                 load_format="bitsandbytes",
                 hf_token=True,
-                max_model_len=16384,
-                max_num_seqs=4,
+                max_model_len=context_window_len,
+                max_num_seqs=2,
                 language_model_only=True,
             )
             self.engine = AsyncLLMEngine.from_engine_args(self.engine_args)
@@ -147,6 +157,7 @@ class InferenceEngine:
             presence_penalty=0.0,
             repetition_penalty=1.0,
             output_kind=RequestOutputKind.DELTA,
+            max_tokens=None,
         )  # this is for Qwen/Qwen3.8-27B in particular
 
         if "darwin" in system().lower():
@@ -157,7 +168,7 @@ class InferenceEngine:
                 trust_remote_code=False,
                 hf_token=True,
                 max_model_len=3072,
-                max_num_seqs=4,
+                max_num_seqs=2,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
                 self.embedding_engine_args
@@ -170,7 +181,7 @@ class InferenceEngine:
                 trust_remote_code=False,
                 hf_token=True,
                 max_model_len=3072,
-                max_num_seqs=4,
+                max_num_seqs=2,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
                 self.embedding_engine_args
@@ -263,6 +274,19 @@ class InferenceEngine:
 
         token_ids = formatted_conversation["input_ids"]  # ty: ignore
 
+        if (
+            self.engine.model_config.max_model_len - len(token_ids) <= 200
+        ):  # compress/summarize the request as much as possible
+            await self.summarize_conversation(conversation)
+            attachments = conversation.attachments
+
+            formatted_conversation = self.tokenizer.apply_chat_template(
+                attachments,  # ty: ignore
+                tokenize=True,
+                add_generation_prompt=True,
+            )
+            token_ids = formatted_conversation["input_ids"]  # ty: ignore
+
         stage = 0
 
         async for output in self.engine.generate(
@@ -291,6 +315,19 @@ class InferenceEngine:
             )
 
             token_ids = formatted_conversation["input_ids"]  # ty: ignore
+
+            if (
+                self.engine.model_config.max_model_len - len(token_ids) <= 200
+            ):  # compress/summarize the request as much as possible
+                await self.summarize_conversation(conversation)
+                attachments = conversation.attachments
+
+                formatted_conversation = self.tokenizer.apply_chat_template(
+                    attachments,  # ty: ignore
+                    tokenize=True,
+                    add_generation_prompt=True,
+                )
+                token_ids = formatted_conversation["input_ids"]  # ty: ignore
 
             stage = 0
 
@@ -380,3 +417,85 @@ class InferenceEngine:
                 child["position"],
                 i == len(ast["children"]) - 1,
             )
+
+    async def summarize_conversation(self, conversation: Conversation):
+        if conversation.attachments != None:
+            if len(conversation.attachments) == 2:  # just started the conversation
+                summarize_conversation = [
+                    {
+                        "role": "system",
+                        "content": self.summary_template.render(
+                            message=conversation.attachments[-1]["content"]
+                        ),
+                    },
+                ]
+                summarized_user_input_formatted = self.tokenizer.apply_chat_template(
+                    summarize_conversation, tokenize=True, add_generation_prompt=True
+                )  # ty: ignore
+
+                summary = ""
+
+                async for output in self.engine.generate(
+                    TokensPrompt(
+                        prompt_token_ids=summarized_user_input_formatted["input_ids"]
+                    ),
+                    self.engine_sampling_args,
+                    str(uuid4()),
+                ):  # ty: ignore
+                    summary += output.outputs[0].text
+
+                conversation.attachments[-1] = {"role": "user", "content": summary}
+            else:
+                conversation_str = ""
+
+                for i in range(1, len(conversation.attachments)):
+                    if conversation.attachments[i]["role"] == "user":
+                        conversation_str += (
+                            "User:\n" + conversation.attachments[i]["content"]
+                        )
+                    elif conversation.attachments[i]["role"] == "system":
+                        conversation_str += (
+                            "System:\n" + conversation.attachments[i]["content"]
+                        )
+                    else:
+                        conversation_str += (
+                            "Assistant:\n" + conversation.attachments[i]["content"]
+                        )
+
+                summarize_conversation = [
+                    {
+                        "role": "system",
+                        "content": self.summary_template.render(
+                            message=conversation_str
+                        ),
+                    },
+                ]
+                summarized_user_input_formatted = self.tokenizer.apply_chat_template(
+                    summarize_conversation, tokenize=True, add_generation_prompt=True
+                )  # ty: ignore
+
+                summary = ""
+
+                async for output in self.engine.generate(
+                    TokensPrompt(
+                        prompt_token_ids=summarized_user_input_formatted["input_ids"]
+                    ),
+                    self.engine_sampling_args,
+                    str(uuid4()),
+                ):  # ty: ignore
+                    summary += output.outputs[0].text
+
+                new_conversation_attachments = [
+                    {
+                        "role": "system",
+                        "content": conversation.attachments[0]["content"],
+                    },
+                    {
+                        "role": "system",
+                        "content": 'This is a summary of the conversation thus far. Do not refer to the conversation history as a summary or imply it has been summarized - simply use the summary as a way to "recall" the conversation and respond to the user\'s most recent query:\n'
+                        + summary,
+                    },
+                ]
+                conversation.attachments = new_conversation_attachments
+        else:
+            raise AIAppError("There is no conversation to summarize!")
