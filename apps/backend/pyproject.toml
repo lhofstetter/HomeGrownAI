@@ -57,7 +57,7 @@ dependencies = [
     "md2docx-python>=1.0.0",
     "beautifulsoup4>=4.15.0",
     "markdownify>=1.2.3",
-    "anyio>=4.14.1",
+    "anyio>=4.14.2",
 ]
 
 [project.scripts]
@@ -163,6 +163,8 @@ filterwarnings = [
   "ignore:builtin type (SwigPyPacked|SwigPyObject|swigvarlink) has no __module__ attribute:DeprecationWarning",
   "ignore:`torch\\.jit\\.script_method` is deprecated.*:DeprecationWarning:torch\\.jit\\._script",
 ]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
 
 # timezone to use when rendering the date within the migration file
 # as well as the filename.
