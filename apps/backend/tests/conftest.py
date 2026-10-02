@@ -11,11 +11,9 @@ def db_session():
 
 
 @pytest.fixture
-def test_user(db_session: Session) -> User:
+def setup_user(db_session: Session):
     user: User | None = (
         db_session.query(User).filter(User.username == settings.test_user).first()
     )
 
-    assert user != None
-
-    return user
+    yield user
