@@ -24,7 +24,7 @@ dependencies = [
     "amd-torchvision-device-gfx1201==0.28.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "triton==3.8.0+git4cff872c.rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "flash-attn==2.8.3; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
-    "amd-aiter==0.1.20.post1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "amd-aiter==0.1.22.post2.dev0+gb4d9154d1.d20261002; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "tensorizer==2.12.1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "vllm==0.29.1.dev0+rocm10.1.0.g98dff2a81.d20261002; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "vllm==0.29.0; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
@@ -123,7 +123,7 @@ amd-aiter = [
     { index = "amd-vllm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
 ]
 vllm = [
-    { url = "https://rocm.frameworks.amd.com/whl-multi-arch/vllm/vllm/vllm-0.27.1.dev5%2Brocm10.0.0.gf46a9dfe2.d20260826-cp314-cp314-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
+    { url = "https://rocm.frameworks.amd.com/whl-multi-arch/vllm/vllm/vllm-0.29.1.dev0%2Brocm10.1.0.g98dff2a81.d20261002-cp314-cp314-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
     { url = "https://github.com/vllm-project/vllm/releases/download/v0.29.0/vllm-0.29.0%2Bcpu-cp312-cp312-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'" },
 ]
 vllm-metal = { url = "https://github.com/vllm-project/vllm-metal/releases/download/v0.29.0/vllm_metal-0.29.0-cp312-cp312-macosx_15_0_arm64.whl" }

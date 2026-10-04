@@ -1,7 +1,9 @@
 import os
+import sys
 from collections.abc import AsyncGenerator, Iterable
 from pathlib import Path
 from platform import system
+from sysconfig import get_path
 from typing import Literal
 from uuid import uuid4
 
@@ -10,6 +12,21 @@ if "darwin" in system().lower():
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
     os.environ["VLLM_METAL_USE_PAGED_ATTENTION"] = "1"
 
+if "linux" in system().lower():
+    amd_smi_directory = Path(get_path("purelib")) / "_rocm_sdk_core/share/amd_smi"
+    if amd_smi_directory.is_dir():
+        # Update this interpreter and the environment inherited by subprocesses.
+        amd_smi_path = str(amd_smi_directory)
+        if amd_smi_path not in sys.path:
+            sys.path.insert(0, amd_smi_path)
+        python_paths = os.environ.get("PYTHONPATH", "").split(os.pathsep)
+        if amd_smi_path not in python_paths:
+            os.environ["PYTHONPATH"] = os.pathsep.join(
+                [amd_smi_path, *(path for path in python_paths if path)]
+            )
+    os.environ["FLASH_ATTENTION_TRITON_AMD_ENABLE"] = "TRUE"
+    os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
+    os.environ["VLLM_LOGGING_LEVEL"] = "ERROR"
 
 import pymupdf4llm
 from anyio import open_file
@@ -29,6 +46,7 @@ from vllm import (
     TokensPrompt,
 )
 from vllm.sampling_params import RequestOutputKind
+from vllm.config import CompilationConfig, CUDAGraphMode
 from wenmode import Wenmode
 
 from homegrownai.database.user import User
@@ -125,9 +143,13 @@ class InferenceEngine:
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
                 hf_token=True,
                 max_model_len=context_window_len,
-                max_num_seqs=2,
+                max_num_seqs=1,
                 disable_log_stats=True,
                 language_model_only=True,
+                compilation_config=CompilationConfig(
+                    cudagraph_mode=CUDAGraphMode.NONE,
+                ),
+                gpu_memory_utilization=0.84,
             )
             self.engine = AsyncLLMEngine.from_engine_args(self.engine_args)
             self.quantization_method = "native/none"
@@ -142,8 +164,12 @@ class InferenceEngine:
                 load_format="bitsandbytes",
                 hf_token=True,
                 max_model_len=context_window_len,
-                max_num_seqs=2,
+                max_num_seqs=1,
                 language_model_only=True,
+                compilation_config=CompilationConfig(
+                    cudagraph_mode=CUDAGraphMode.NONE,
+                ),
+                gpu_memory_utilization=0.84,
             )
             self.engine = AsyncLLMEngine.from_engine_args(self.engine_args)
             self.quantization_method = "bitsandbytes"
@@ -167,8 +193,11 @@ class InferenceEngine:
                 dtype="auto",
                 trust_remote_code=False,
                 hf_token=True,
-                max_model_len=3072,
-                max_num_seqs=2,
+                max_model_len=2048,
+                enable_prefix_caching=True,
+                kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
+                max_num_seqs=1,    
+                gpu_memory_utilization=0.08,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
                 self.embedding_engine_args
@@ -180,8 +209,11 @@ class InferenceEngine:
                 dtype="auto",
                 trust_remote_code=False,
                 hf_token=True,
-                max_model_len=3072,
-                max_num_seqs=2,
+                max_model_len=2048,
+                enable_prefix_caching=True,
+                kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
+                max_num_seqs=1,    
+                gpu_memory_utilization=0.08,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
                 self.embedding_engine_args
