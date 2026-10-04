@@ -13,8 +13,23 @@ import { useEffect } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import SignInForm from './types/SignInForm';
+import SignUpForm from './types/SignUpForm';
 import axios, { AxiosError } from 'axios';
 import { AuthContext, SignInContext } from './contexts';
+import isEmail from "validator/lib/isEmail";
+import { ZxcvbnFactory } from "@zxcvbn-ts/core";
+import * as common from "@zxcvbn-ts/language-common";
+import * as english from "@zxcvbn-ts/language-en";
+import SignUpScreen from './screens/SignUp';
+
+const zxcvbn = new ZxcvbnFactory({
+    dictionary: {
+        ...common.dictionary,
+        ...english.dictionary,
+    },
+    graphs: common.adjacencyGraphs,
+    translations: english.translations,
+});
 
 const AnimatedMeshGradient = Animated.createAnimatedComponent(MeshGradientView);
 
@@ -102,14 +117,34 @@ function routeIsSignedOut() {
 
 
 const RootStack = createNativeStackNavigator({
-  screens: {
-    Home: {
+  groups: {
+    SignedIn: {
 		if: routeIsSignedIn,
-		screen: HomeScreen,
+		screens:{
+			Home: {
+				screen: HomeScreen,
+				options: {
+					headerShown: false,
+				},
+			}
+		},
     },
 	Login: {
 		if: routeIsSignedOut,
-		screen: LoginScreen,
+		screens: {
+			Login: {
+				screen: LoginScreen,
+				options: {
+					headerShown: false,
+				},
+			},
+			SignUp: {
+				screen: SignUpScreen,
+				options: {
+					headerShown: false,
+				},
+			},
+		},
 	},
   },
 });
@@ -200,9 +235,19 @@ export default function App() {
 
 			try {
 				const loginResponse = await apiClient.postForm("users/login", loginFormData);
-				await SecureStore.setItemAsync("access_token", loginResponse.data.access_token);
 
-	        	dispatch({ type: 'SIGN_IN', token: loginResponse.data.access_token, isLoading: false });
+				if (loginResponse.status != 200) {
+					Alert.alert("Something went wrong :/", "Please try again in a little bit.", [
+						{
+							text: "OK",
+							onPress: () => {},
+						}
+					]);
+				} else {
+					await SecureStore.setItemAsync("access_token", loginResponse.data.access_token);
+
+					dispatch({ type: 'SIGN_IN', token: loginResponse.data.access_token, isLoading: false });
+				}
 			} catch (error: any) {
 				console.log(error.message, error.code, error.status);
 				Alert.alert("Incorrect Username/email address or Password", "Please enter a valid username or email address and password.", [
@@ -215,7 +260,63 @@ export default function App() {
 
 	},
 		signOut: () => dispatch({ type: 'SIGN_OUT', isLoading: false }),
-		signUp: () => dispatch({ type: 'SIGN_UP', signingUp: true, isLoading: false }),
+		signUp: async (data: SignUpForm) => {
+			const signUpFormData = new FormData();
+
+			if (data.password !== data.confirmPassword) {
+				Alert.alert("Passwords do not match!", "Please ensure that the password and confirm password fields match.", [
+					{
+						text: "OK",
+						onPress: () => {},
+					}
+				]);
+			} else if (!isEmail(data.emailAddress)) {
+				Alert.alert("Email address is invalid!", "Please enter a valid email address.", [
+					{
+						text: "OK",
+						onPress: () => {},
+					}
+				]);
+			} else if (data.password.length < 8 || data.password.length > 48 || zxcvbn.check(data.password).score < 3) {
+				Alert.alert("Password is too weak or too long!", "Please make sure that your password is difficult to guess, is longer than 8 characters and shorter than 48 characters.", [
+					{
+						text: "OK",
+						onPress: () => {},
+					}
+				]);
+			} else {
+				signUpFormData.append('username', data.username);
+				signUpFormData.append('email', data.emailAddress);
+
+				const passwordDigest = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA512, data.password);
+
+				signUpFormData.append('password', passwordDigest);
+
+				const apiClient = axios.create({
+					baseURL: SITE.toString(),
+					headers: {
+						'Accept': 'application/json'
+					}
+				});
+
+				const signUpResponse = await apiClient.postForm("users/login", signUpFormData);
+
+				if (signUpResponse.status != 200) {
+					Alert.alert("Something went wrong :/", "Please try again in a little bit.", [
+						{
+							text: "OK",
+							onPress: () => {},
+						}
+					]);
+				} else {
+					await SecureStore.setItemAsync("access_token", signUpResponse.data.access_token);
+
+					dispatch({ type: 'SIGN_UP', signingUp: true, isLoading: false })
+				}
+
+			}
+
+		},
 	}), []);
 
 	if (state.isLoading) {
