@@ -22,8 +22,8 @@ dependencies = [
     "amd-torch-device-gfx12-0==2.13.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "amd-torch-device-gfx1201==2.13.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "amd-torchvision-device-gfx1201==0.28.0+rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
-	"pyamdgpuinfo>=2.1.8; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
-	"macgputils>=0.1.2; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
+    "pyamdgpuinfo>=2.1.8; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "macgputils>=0.1.2; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
     "triton==3.8.0+git4cff872c.rocm10.0.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "flash-attn==2.8.3; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
     "amd-aiter==0.1.22.post2.dev0+gb4d9154d1.d20261002; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
@@ -63,7 +63,8 @@ dependencies = [
     "anyio>=4.14.2",
     "urllib3>=2.8.0",
     "psutil>=7.2.2",
-	"multidict>=6.9.1"
+    "multidict>=6.9.1",
+    "mako>=1.4.2",
 ]
 
 [project.scripts]
