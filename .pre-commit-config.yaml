@@ -20,6 +20,10 @@ repos:
       entry: betterleaks git --pre-commit --redact --staged --verbose
       language: golang
       pass_filenames: false
+-   repo: https://github.com/rohaquinlop/complexipy-pre-commit
+    rev: v8.1.0
+    hooks:
+        - id: complexipy
 -   repo: local
     hooks:
     - id: prettier
