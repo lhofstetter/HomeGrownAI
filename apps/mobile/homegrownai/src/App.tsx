@@ -285,33 +285,43 @@ export default function App() {
 					}
 				]);
 			} else {
-				signUpFormData.append('username', data.username);
-				signUpFormData.append('email', data.emailAddress);
+				try {
+					signUpFormData.append('username', data.username);
+					signUpFormData.append('email', data.emailAddress);
 
-				const passwordDigest = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA512, data.password);
+					const passwordDigest = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA512, data.password);
 
-				signUpFormData.append('password', passwordDigest);
+					signUpFormData.append('password', passwordDigest);
 
-				const apiClient = axios.create({
-					baseURL: SITE.toString(),
-					headers: {
-						'Accept': 'application/json'
+					const apiClient = axios.create({
+						baseURL: SITE.toString(),
+						headers: {
+							'Accept': 'application/json'
+						}
+					});
+
+					const signUpResponse = await apiClient.postForm("users/signup", signUpFormData);
+
+					if (signUpResponse.status != 200) {
+						Alert.alert("Something went wrong :/", "Please try again in a little bit.", [
+							{
+								text: "OK",
+								onPress: () => {},
+							}
+						]);
+					} else {
+						await SecureStore.setItemAsync("access_token", signUpResponse.data.access_token);
+
+						dispatch({ type: 'CACHED_TOKEN', signingUp: false, isLoading: false })
 					}
-				});
-
-				const signUpResponse = await apiClient.postForm("users/login", signUpFormData);
-
-				if (signUpResponse.status != 200) {
-					Alert.alert("Something went wrong :/", "Please try again in a little bit.", [
+				} catch (error: any) {
+					console.log(error.message, error.code, error.status);
+					Alert.alert("Sign Up attempt failed.", "Please try again in a little bit.", [
 						{
 							text: "OK",
 							onPress: () => {},
 						}
 					]);
-				} else {
-					await SecureStore.setItemAsync("access_token", signUpResponse.data.access_token);
-
-					dispatch({ type: 'SIGN_UP', signingUp: true, isLoading: false })
 				}
 
 			}

@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import UUID, DateTime, ForeignKey, String, Uuid, func
+from sqlalchemy.dialects.postgresql import TEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from homegrownai.database.db import Base
@@ -32,6 +33,11 @@ class Document(Base):
 
     original_file_name: Mapped[str] = mapped_column(
         String(255),
+        nullable=False,
+    )
+
+    file_path: Mapped[str] = mapped_column(
+        TEXT,
         nullable=False,
     )
 

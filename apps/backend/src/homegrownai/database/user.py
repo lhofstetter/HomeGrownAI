@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 from uuid import uuid4
 
 from sqlalchemy import select, update
@@ -18,6 +18,7 @@ from ..exceptions import (
 if TYPE_CHECKING:
     from homegrownai.database.conversation import Conversation
     from homegrownai.database.document import Document
+    from homegrownai.database.memory import Memory
 
 
 class User(Base):
@@ -28,6 +29,9 @@ class User(Base):
     )
     username: Mapped[str] = mapped_column(
         unique=True,
+    )
+    role: Mapped[Literal["admin", "user", "untrusted_user"]] = mapped_column(
+        default="user"
     )
     hashed_password: Mapped[str]
     email: Mapped[str] = mapped_column(
@@ -41,11 +45,17 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    memories: Mapped[list[Memory]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
     documents: Mapped[list[Document]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
     custom_model_name: Mapped[str | None]
     custom_model_instructions: Mapped[str | None]
     human_name: Mapped[str | None]

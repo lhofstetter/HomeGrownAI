@@ -2,17 +2,16 @@ import os
 import sys
 from collections.abc import AsyncGenerator, Iterable
 from pathlib import Path
-from platform import system
 from sysconfig import get_path
 from typing import Literal
 from uuid import uuid4
 
-if "darwin" in system().lower():
+if sys.platform == "darwin":
     os.environ["VLLM_LOGGING_LEVEL"] = "ERROR"
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
     os.environ["VLLM_METAL_USE_PAGED_ATTENTION"] = "1"
 
-if "linux" in system().lower():
+if sys.platform == "linux":
     amd_smi_directory = Path(get_path("purelib")) / "_rocm_sdk_core/share/amd_smi"
     if amd_smi_directory.is_dir():
         # Update this interpreter and the environment inherited by subprocesses.
@@ -45,8 +44,8 @@ from vllm import (
     TextPrompt,
     TokensPrompt,
 )
-from vllm.sampling_params import RequestOutputKind
 from vllm.config import CompilationConfig, CUDAGraphMode
+from vllm.sampling_params import RequestOutputKind
 from wenmode import Wenmode
 
 from homegrownai.database.user import User
@@ -186,7 +185,7 @@ class InferenceEngine:
             max_tokens=None,
         )  # this is for Qwen/Qwen3.8-27B in particular
 
-        if "darwin" in system().lower():
+        if sys.platform == "darwin":
             self.embedding_engine_args = AsyncEngineArgs(
                 model="mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ",
                 runner="pooling",
@@ -196,13 +195,13 @@ class InferenceEngine:
                 max_model_len=2048,
                 enable_prefix_caching=True,
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
-                max_num_seqs=1,    
+                max_num_seqs=1,
                 gpu_memory_utilization=0.08,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
                 self.embedding_engine_args
             )
-        elif "linux" in system().lower():
+        elif sys.platform == "linux":
             self.embedding_engine_args = AsyncEngineArgs(
                 model="Qwen/Qwen3-Embedding-0.6B",
                 runner="pooling",
@@ -212,7 +211,7 @@ class InferenceEngine:
                 max_model_len=2048,
                 enable_prefix_caching=True,
                 kv_cache_dtype=self.supported_kv_quantization[-1],  # ty: ignore
-                max_num_seqs=1,    
+                max_num_seqs=1,
                 gpu_memory_utilization=0.08,
             )
             self.embedding_engine = AsyncLLMEngine.from_engine_args(
@@ -462,18 +461,20 @@ class InferenceEngine:
                     },
                 ]
                 summarized_user_input_formatted = self.tokenizer.apply_chat_template(
-                    summarize_conversation, tokenize=True, add_generation_prompt=True
-                )  # ty: ignore
+                    summarize_conversation,
+                    tokenize=True,
+                    add_generation_prompt=True,  # ty: ignore
+                )
 
                 summary = ""
 
                 async for output in self.engine.generate(
                     TokensPrompt(
-                        prompt_token_ids=summarized_user_input_formatted["input_ids"]
+                        prompt_token_ids=summarized_user_input_formatted["input_ids"]  # ty: ignore
                     ),
                     self.engine_sampling_args,
                     str(uuid4()),
-                ):  # ty: ignore
+                ):
                     summary += output.outputs[0].text
 
                 conversation.attachments[-1] = {"role": "user", "content": summary}
@@ -503,18 +504,19 @@ class InferenceEngine:
                     },
                 ]
                 summarized_user_input_formatted = self.tokenizer.apply_chat_template(
-                    summarize_conversation, tokenize=True, add_generation_prompt=True
-                )  # ty: ignore
-
+                    summarize_conversation,
+                    tokenize=True,
+                    add_generation_prompt=True,  # ty: ignore
+                )
                 summary = ""
 
                 async for output in self.engine.generate(
                     TokensPrompt(
-                        prompt_token_ids=summarized_user_input_formatted["input_ids"]
+                        prompt_token_ids=summarized_user_input_formatted["input_ids"]  # ty: ignore
                     ),
                     self.engine_sampling_args,
                     str(uuid4()),
-                ):  # ty: ignore
+                ):
                     summary += output.outputs[0].text
 
                 new_conversation_attachments = [

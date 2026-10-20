@@ -1,12 +1,12 @@
 from ipaddress import ip_address
 from os import environ
 from pathlib import Path
-from platform import machine, system
+from platform import machine
 from shlex import split
 from shutil import move, which
 from socket import AF_UNSPEC, gaierror, getaddrinfo
 from subprocess import DEVNULL, CalledProcessError, Popen, run
-from sys import exit
+from sys import exit, platform
 from urllib.parse import urlencode
 
 import docker
@@ -26,15 +26,15 @@ class Browser:
         if which("obscura") == None:
             untar_command = "tar xvf obscura.tar.gz"
 
-            if "darwin" in system().lower():
+            if platform == "darwin":
                 obscura_download = get(
                     "https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-aarch64-macos.tar.gz"
                 )
-            elif "linux" in system().lower() and "amd64" in machine().lower():
+            elif platform == "linux" and "amd64" in machine().lower():
                 obscura_download = get(
                     "https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-x86_64-linux.tar.gz"
                 )
-            elif "linux" in system().lower():
+            elif platform == "linux":
                 obscura_download = get(
                     "https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-aarch64-linux.tar.gz"
                 )

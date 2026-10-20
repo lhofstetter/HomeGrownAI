@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Annotated
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from anyio import open_file
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from magic import from_buffer
 from sqlalchemy import and_
 
@@ -26,8 +26,60 @@ upload_directory = Path("./uploads")
 if not upload_directory.exists():
     upload_directory.mkdir()
 
-
 maximum_file_size_limit_in_bytes = 10000000  # 10 MB
+
+
+@files_router.get("/files")
+async def get_files(
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[DBSession, Depends(get_db_session)],
+):
+    with session as db:
+        user: User | None = db.query(User).filter(User.id == current_user.id).first()
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token! Please log in again.",
+                headers={"WWW-Authenticate": "Bearer token error!"},
+            )
+
+        for doc in user.documents:
+            m = {
+                "id": doc.id,
+                "original_file_name": doc.original_file_name,
+                "title": doc.title,
+            }
+
+            yield m
+
+
+@files_router.get("/file/{file_id}")
+async def get_file(
+    file_id: UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[DBSession, Depends(get_db_session)],
+):
+
+    with session as db:
+        document: Document | None = (
+            db.query(Document)
+            .filter(and_(Document.id == file_id, Document.user_id == current_user.id))
+            .first()
+        )
+
+        if document is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Resource is not found on the server!",
+            )
+        else:
+            async with await open_file(document.file_path, "rb") as f:
+                content = f.read()
+
+            m = {"document_id": document.id, "content": content}
+
+            return m
 
 
 @files_router.post("/upload")
@@ -85,8 +137,6 @@ async def upload_file(
         or "plain" in file_type
         or "css" in file_type
     ):
-        await file.seek(0)
-
         uploaded_file = await file.read()
 
         if file_type == "application/pdf":
@@ -197,6 +247,7 @@ async def upload_file(
                 title=file_name,
                 original_file_name=str(file.filename),
                 user=current_user,
+                file_path=file_path,
                 embedding_model_id=e.embedding_engine.model_config.model,
             )
             index = 0

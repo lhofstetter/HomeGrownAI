@@ -20,7 +20,7 @@ export default function SignUpScreen({ route }: SignUpScreenProps) {
 	let colorScheme = useColorScheme();
 
 	// @ts-ignore
-	const { signIn } = useContext(AuthContext);
+	const { signUp } = useContext(AuthContext);
 
 	let [fontsLoaded] = useFonts({
 		Inter_400Regular,
@@ -52,7 +52,7 @@ export default function SignUpScreen({ route }: SignUpScreenProps) {
 					<TextInput className="border-blue-400 border w-1/2 text-lg rounded-md" style={{fontFamily: "Inter_400Regular"}} editable secureTextEntry value={confirmPassword} placeholder="Password" placeholderTextColor={"#D3D3D3"} onChangeText={setConfirmPassword} multiline={false} autoComplete={"current-password"} clearButtonMode='always' defaultValue='password'/>
 				</View>
 				<View className="mt-3">
-					<Pressable onPressOut={() => signIn({ username, password})} className="w-1/2 rounded-full mt-3 bg-blue-100">
+					<Pressable onPressOut={() => signUp({ username, emailAddress, password, confirmPassword})} className="w-1/2 rounded-full mt-3 bg-blue-100">
 						<Text style={{fontFamily: "Inter_400Regular"}} className="text-xl ml-4 mr-4 p-2">Sign Up</Text>
 					</Pressable>
 				</View>

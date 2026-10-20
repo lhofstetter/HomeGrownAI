@@ -1,15 +1,23 @@
 from contextlib import asynccontextmanager
 from importlib.metadata import version
-from platform import system
-from sys import stderr
+from sys import platform, stderr
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from loguru import logger
+
+if platform == "darwin":
+    pass
+else:
+    pass
 
 from homegrownai.ai.engine import InferenceEngine
 from homegrownai.api.routes.files import files_router
 from homegrownai.api.routes.users import users_router
+from homegrownai.database.db import DBSession
+from homegrownai.database.dependencies import get_db_session
 from homegrownai.database.schema import ensure_database_schema
+from homegrownai.security.security import CurrentUser
 
 logger.remove()
 logger.add(stderr, format="{time:MMMM D, YYYY > HH:mm:ss} | {extra} | {message}")
@@ -19,7 +27,7 @@ logger.add(stderr, format="{time:MMMM D, YYYY > HH:mm:ss} | {extra} | {message}"
 async def lifespan(app: FastAPI):
     ensure_database_schema()
 
-    if "darwin" in system().lower():
+    if platform == "darwin":
         app.state.inference_engine = InferenceEngine("mlx-community/Qwen3.8-27B-4bit")
     else:
         app.state.inference_engine = InferenceEngine("RedHatAI/Qwen3.8-27B-INT4")
@@ -51,3 +59,10 @@ async def root():
         "status": "ok",
         "version": app.version,
     }
+
+
+@app.get("/health")
+async def health(
+    user: CurrentUser, session: Annotated[DBSession, Depends(get_db_session)]
+):
+    pass
