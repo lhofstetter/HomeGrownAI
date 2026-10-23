@@ -65,6 +65,10 @@ dependencies = [
     "psutil>=7.2.2",
     "multidict>=6.9.1",
     "mako>=1.4.2",
+    "certifi>=2026.10.19",
+	"pillow>=13.0.0",
+	"filelock>=4.2.1",
+	"opentelemetry-api>=1.45.1"
 ]
 
 [project.scripts]
@@ -127,11 +131,12 @@ flash-attn = [
 amd-aiter = [
     { index = "amd-vllm", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
 ]
+
 vllm = [
     { url = "https://rocm.frameworks.amd.com/whl-multi-arch/vllm/vllm/vllm-0.29.1.dev0%2Brocm10.1.0.g98dff2a81.d20261002-cp314-cp314-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'" },
-    { url = "https://github.com/vllm-project/vllm/releases/download/v0.31.0/vllm-0.31.0%2Bcpu-cp312-cp312-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'" },
+    { url = "https://github.com/vllm-project/vllm/releases/download/v0.32.0/vllm-0.32.0+cpu-cp38-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'" },
 ]
-vllm-metal = { url = "https://github.com/vllm-project/vllm-metal/releases/download/v0.31.0/vllm_metal-0.31.0-cp312-cp312-macosx_15_0_arm64.whl" }
+vllm-metal = { url = "https://github.com/vllm-project/vllm-metal/releases/download/v0.32.0/vllm_metal-0.32.0-cp312-cp312-macosx_15_0_arm64.whl" }
 
 [[tool.uv.index]]
 name = "amd-rocm"
