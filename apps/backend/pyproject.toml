@@ -68,7 +68,8 @@ dependencies = [
     "certifi>=2026.10.19",
 	"pillow>=13.0.0",
 	"filelock>=4.2.1",
-	"opentelemetry-api>=1.45.1"
+	"opentelemetry-api>=1.45.1",
+	"pyasn1>=0.6.5"
 ]
 
 [project.scripts]

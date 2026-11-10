@@ -55,6 +55,32 @@ class UploadError(AIAppError):
         super().__init__("File upload error. Please try again later.")
 
 
+class WrongParameterEmbeddings(AIAppError):
+    def __init__(self):
+        super().__init__("Wrong parameter type passed for generating embeddings!")
+
+
+class EmptyModelPathError(AIAppError):
+    def __init__(self):
+        super().__init__(
+            "You cannot pass an empty path to InferenceEngine's constructor!"
+        )
+
+
+class InferenceEngineNotStartedError(AIAppError):
+    def __init__(self):
+        super().__init__(
+            "Fast startup was used to initalize the InferenceEngine, but the engine was never started!"
+        )
+
+
+class EmptyConversationAttachmentsError(AIAppError):
+    def __init__(self):
+        super().__init__(
+            "Conversation attachments were empty when they needed context!"
+        )
+
+
 class EmailAlreadyRegisteredError(UserRegistrationError):
     pass
 

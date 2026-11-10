@@ -9,6 +9,6 @@ class UserRegistration(BaseModel):
 
 class Conversation(BaseModel):
     conversationTitle: str
-    conversationID: str
+    conversationID: bytes
     modelID: str | None
     attachments: list[dict[str, str]] | None

@@ -264,7 +264,7 @@ wheels = [
 
 [[package]]
 name = "apache-tvm-ffi"
-version = "0.1.15.post0"
+version = "0.1.15.post1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version < '3.13' and platform_machine == 'arm64' and sys_platform == 'darwin'",
@@ -272,12 +272,12 @@ resolution-markers = [
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/71/f1d846c2010490e72196dccd55af099be5d7ed41be14bc47f5102c70bfe1/apache_tvm_ffi-0.1.15.post0.tar.gz", hash = "sha256:67f7981d6175ad348ba45b3f7a524a5f630b72e4403f75cc2b84e2aa8b492d60", size = 3290400, upload-time = "2026-10-20T10:58:22.458Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/c3/b6f58a685722af7193a35bed44cf77ce8359a2e3766f81fe2e2abaaff740/apache_tvm_ffi-0.1.15.post1.tar.gz", hash = "sha256:4430adcf4cb4d73650690ccfbbb719a29205dec1f6ae2e6a21c1bdd22d615901", size = 3335976, upload-time = "2026-10-25T14:43:22.41Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/52/7d5c2d77904c2acfa9d916c5b04413019a2da34d8858928a06b9a9a093d4/apache_tvm_ffi-0.1.15.post0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:40d1fafc28cd9e77e66bb6f439bf1447ac4d8d42bc225b3f24520ebf91a97ef8", size = 5397353, upload-time = "2026-10-20T10:57:12.593Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/1e/82d953b8f4543e1f40f8e8a292ed975e1bec4b5ea95005f1896e10f8d5cf/apache_tvm_ffi-0.1.15.post0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:7ade69843b5ccf8bca23c5483e73e3f6bcabdadf0e33053d5f33805cc6be1b09", size = 5398445, upload-time = "2026-10-20T10:57:23.148Z" },
-    { url = "https://files.pythonhosted.org/packages/f2/eb/80b53ac350260ab86640e23b418f9aa75895f9d44731510eea46187ac178/apache_tvm_ffi-0.1.15.post0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:bb966355ba4867232dfe7aaed0f3f5acfe454546292624762514cf2f5f955e5c", size = 5405582, upload-time = "2026-10-20T10:57:33.695Z" },
-    { url = "https://files.pythonhosted.org/packages/78/fc/7d920824faca147250d3c6b172127021d87fce8f667ad1d9537478029ad8/apache_tvm_ffi-0.1.15.post0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:1d5226547d9d383e6bcff066199e8b10c65ade0e932641c83c30d907de205744", size = 5428517, upload-time = "2026-10-20T10:57:43.997Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/7b/29c13aab006feed72359372b0dbf271c80755a82f97a606d387626378495/apache_tvm_ffi-0.1.15.post1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:07dde4803be1348f9cd3d87aefc4ede3464ac8a2aca9940213cbc69b27259a13", size = 5401401, upload-time = "2026-10-25T14:42:12.504Z" },
+    { url = "https://files.pythonhosted.org/packages/63/0f/ce40a82f4fdf9e469ab985a96af08f4a7f1adf6aca47d1ecb523836a5d37/apache_tvm_ffi-0.1.15.post1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b905de3fbf7dc449c4163ee0deb11f283339fd0b149e17e36d7e0273f75a98f5", size = 5402488, upload-time = "2026-10-25T14:42:23.096Z" },
+    { url = "https://files.pythonhosted.org/packages/48/1e/ed5770fffe0a1629f82ce0fdca4f0ded43b8e63cb1c3ac829e68e96d4fb3/apache_tvm_ffi-0.1.15.post1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:e3ab4439f700de1edac2565d5b35a315c8d7c6c2ade2a3f843cbc92580e2ba7a", size = 5409635, upload-time = "2026-10-25T14:42:32.635Z" },
+    { url = "https://files.pythonhosted.org/packages/16/3e/e787e9f9431e645e3c51edb764dae6660a31bf65d5b6bd54925dd4c793de/apache_tvm_ffi-0.1.15.post1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:9f46a1ebcb91644ef3af9c169fb1948dbc6c51c53e5ea6726cc5c4f7a84ef4b2", size = 5432564, upload-time = "2026-10-25T14:42:42.519Z" },
 ]
 
 [[package]]
@@ -1270,6 +1270,7 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pyamdgpuinfo", marker = "sys_platform == 'linux'" },
+    { name = "pyasn1" },
     { name = "pydantic" },
     { name = "pyjwt" },
     { name = "pymupdf4llm" },
@@ -1344,6 +1345,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
     { name = "pyamdgpuinfo", marker = "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=2.1.8" },
+    { name = "pyasn1", specifier = ">=0.6.5" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pyjwt", specifier = ">=2.14.0" },
     { name = "pymupdf4llm", specifier = ">=1.28.2" },
@@ -3198,11 +3200,11 @@ wheels = [
 
 [[package]]
 name = "pyasn1"
-version = "0.6.4"
+version = "0.6.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a4/9a/23310166d960def5897e91fe20e5b724601b02a22e84ba1f94232c0b7f67/pyasn1-0.6.4.tar.gz", hash = "sha256:9c447d8431c947fe4c8febc4ed9e760bc29011a5b01e5c74b67025bd9fb8ce81", size = 151262, upload-time = "2026-07-09T01:12:33.988Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/7e/3c0da41061a2021cac7cd524fd57092adbe5b515e8bf9005702e366802e2/pyasn1-0.6.5.tar.gz", hash = "sha256:6b11616a6bcf3a40e635f082bb232fa57b5e0dd7f517bd7ddd69ec3794508a47", size = 155152, upload-time = "2026-10-27T06:32:49.125Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/3b/6163796d69c3977d1e4287bea4a6979161cbbdd170ebb430511e8e1999ce/pyasn1-0.6.4-py3-none-any.whl", hash = "sha256:deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b", size = 84410, upload-time = "2026-07-09T01:12:32.92Z" },
+    { url = "https://files.pythonhosted.org/packages/19/1f/3eefd5c84c35cae44549ce1c7f7e58f7945b34f5a6bce07a135438522073/pyasn1-0.6.5-py3-none-any.whl", hash = "sha256:4017b0fce125096b8573b39c989fdb1a4b19cf761e683398184550fea0e66587", size = 84807, upload-time = "2026-10-27T06:32:48.045Z" },
 ]
 
 [[package]]
@@ -5237,7 +5239,7 @@ resolution-markers = [
     "python_full_version < '3.13' and platform_machine == 'arm64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "apache-tvm-ffi", version = "0.1.15.post0", source = { registry = "https://pypi.org/simple" } },
+    { name = "apache-tvm-ffi", version = "0.1.15.post1", source = { registry = "https://pypi.org/simple" } },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" } },
     { name = "pydantic" },
     { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" } },

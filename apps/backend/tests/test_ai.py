@@ -17,14 +17,14 @@ def engine():
     else:
         raise PlatformNotSupportedError()
 
-    engine = InferenceEngine(model_str, 2048)
+    engine = InferenceEngine(model_str, 2048, fast_startup=False)
 
     yield engine
 
     engine.shutdown()
 
 
-def test_init(engine):
+def test_init(engine: InferenceEngine):
     assert engine is not None
     assert engine.embedding_engine is not None
 
