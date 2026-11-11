@@ -2,7 +2,7 @@
 
 This repository is home to a pet project of mine, which is to try to *recreate as close to a ChatGPT-like experience as possible using only self-hosted, open-weight models*.
 
-My plan for the repository is to keep it open-source as it's developed, not just because I want to say I did it and have proof, but because I want other poeple to be able to build with me (if they desire), learn from my mistakes and maybe even learn a few new things along the way (though... idk there's a lot smarter people than me that work on stuff like this so probably not but you never know!)
+My plan for the repository is to keep it open-source as it's developed, not just because I want to say I did it and have proof, but because I want other people to be able to build with me (if they desire), learn from my mistakes and maybe even learn a few new things along the way (though... idk there's a lot smarter people than me that work on stuff like this so probably not but you never know!)
 
 ## Q & A
 
