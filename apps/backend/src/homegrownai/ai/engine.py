@@ -397,16 +397,12 @@ class InferenceEngine:
             raise FileTypeMismatchError
 
         for i, child in enumerate(ast["children"]):
-            text = ""
-            if child["type"] == "paragraph":
-                for sentences in child["children"]:
-                    text += sentences["value"]
-            elif "value" in child:
-                text += child["value"]
+            text = " ".join(self.__unpack_child_ast(child))
+
             yield (
                 text,
                 self.embedding_engine.encode(
-                    TextPrompt(text),  # ty: ignore
+                    TextPrompt(prompt=text),
                     pooling_params=self.embedding_pooling_args,
                     request_id=str(uuid4()),
                 ),
@@ -414,7 +410,7 @@ class InferenceEngine:
                 i == len(ast["children"]) - 1,
             )
 
-    async def summarize_conversation(self, conversation: Conversation):
+    async def summarize_conversation(self, conversation: Conversation) -> Conversation:
         if conversation.attachments == None:
             raise EmptyConversationAttachmentsError
 
@@ -465,3 +461,19 @@ class InferenceEngine:
             },
         ]
         conversation.attachments = new_conversation_attachments
+
+        return conversation
+
+    def __unpack_child_ast(self, node: dict) -> list:
+        if "children" not in node:
+            return [node["value"].strip()]
+
+        children = []
+
+        for child in node["children"]:
+            if "children" in child:
+                children.extend(self.__unpack_child_ast(child))
+            else:
+                children.append(child["value"].strip())
+
+        return children
