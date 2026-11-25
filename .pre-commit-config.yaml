@@ -28,5 +28,5 @@ repos:
     hooks:
     - id: prettier
       name: prettier
-      entry: cd apps/mobile && bun format && cd ../..
+      entry: ./scripts/prettier.sh
       language: unsupported
